@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dreamcrumb สมุดต้นทุน</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: a phone-sized app shell, centered on wide screens; four tabs, bottom navigation. Soft sky blue, rounded, cloud mascot. */
+:root{
+  --bg:#EAF4FE; --card:#FFFFFF; --ink:#1E3A5F; --muted:#60758F; --accent:#2B74B8; --accent-ink:#FFFFFF;
+  --soft:#D8EAFB; --warm:#FFE7A6; --warm-ink:#4A3A0A; --pink:#FFD9E4; --line:#D5E4F4; --good:#1F8A5B; --warn:#B8561F;
+  --f-display:'Prompt','Noto Sans Thai',system-ui,sans-serif; --f-body:'Noto Sans Thai','Prompt',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A2A; --card:#162841; --ink:#E7F1FC; --muted:#94A9C4; --accent:#6DB0F0; --accent-ink:#0E1A2A;
+    --soft:#1E3A58; --warm:#5B4B1C; --warm-ink:#FFF1C9; --pink:#4B2B3A; --line:#27425F; --good:#5FD3A0; --warn:#F0A070; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1A2A; --card:#162841; --ink:#E7F1FC; --muted:#94A9C4; --accent:#6DB0F0; --accent-ink:#0E1A2A;
+  --soft:#1E3A58; --warm:#5B4B1C; --warm-ink:#FFF1C9; --pink:#4B2B3A; --line:#27425F; --good:#5FD3A0; --warn:#F0A070; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;padding-inline:0}
+.shell{max-width:440px;margin-inline:auto;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+.screen{flex:1;padding:20px 16px 24px;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+.brand{font-family:var(--f-display);font-weight:700;color:var(--accent);font-size:20px}
+.hello{font-size:28px;line-height:1.25;font-weight:600}
+.sub{color:var(--muted);margin:0}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.cloud{flex:none}
+.card{background:var(--card);border-radius:24px;padding:18px;border:1px solid var(--line)}
+.btn{font-family:var(--f-display);font-weight:600;font-size:18px;border:0;border-radius:999px;padding:16px 20px;background:var(--accent);color:var(--accent-ink);width:100%;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.btn:focus-visible,.tile:focus-visible,.nav button:focus-visible,.seg button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{all:unset;box-sizing:border-box;cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.tile .ic{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--accent)}
+.tile.warm .ic{background:var(--warm);color:var(--warm-ink)} .tile.pink .ic{background:var(--pink);color:var(--ink)}
+.tile b{font-family:var(--f-display);font-size:18px;font-weight:600;line-height:1.25}
+.tile span{color:var(--muted);font-size:14px}
+.h2{font-size:22px;font-weight:600}
+.bar{height:12px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.num{font-variant-numeric:tabular-nums}
+.big{font-family:var(--f-display);font-weight:700;font-size:52px;line-height:1.05;color:var(--accent)}
+.price{background:var(--warm);color:var(--warm-ink);border-radius:24px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.price .p{font-family:var(--f-display);font-weight:700;font-size:40px;line-height:1}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;background:var(--warm);color:var(--warm-ink);white-space:nowrap}
+.tag.guess{background:var(--pink);color:var(--ink)}
+.tag.best{background:var(--good);color:var(--accent-ink)}
+.ing{display:flex;flex-direction:column;gap:6px}
+.note{font-size:14px;color:var(--muted)}
+.tip{display:flex;gap:12px;align-items:flex-start;background:var(--soft);border-radius:20px;padding:14px 16px;font-size:15px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;color:var(--muted)}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;background:var(--soft);border-radius:99px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;border-radius:99px;padding:8px 6px;background:transparent;color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(20,50,90,.18)}
+.scanbox{background:var(--soft);border-radius:28px;padding:22px;display:grid;place-items:center}
+.label-card{background:var(--card);border-radius:18px;padding:16px 20px;transform:rotate(-2deg);width:78%;box-shadow:0 6px 16px rgba(30,58,95,.15)}
+.label-card small{color:var(--muted)} .label-card strong{font-family:var(--f-display);font-size:34px;display:block;line-height:1.1}
+.cmp{display:flex;flex-direction:column}
+.cmp .r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.cmp .r:first-child{border-top:0}
+.cmp .l{min-width:0;display:flex;flex-direction:column}
+.cmp .l b{font-weight:500;overflow-wrap:anywhere}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.chk:first-of-type{border-top:0}
+.chk input{width:22px;height:22px;margin-top:3px;accent-color:var(--accent);flex:none}
+.chk .t{min-width:0}
+.chk input:checked + .t{opacity:.5;text-decoration:line-through}
+.nav{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--card);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+.nav button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:6px 0;border-radius:18px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.nav button[aria-current="page"]{color:var(--accent);font-weight:600}
+.nav button[aria-current="page"] .pill{background:var(--soft)}
+.nav .pill{width:48px;height:34px;border-radius:99px;display:grid;place-items:center}
+.sample{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .25s ease-out}@keyframes in{from{opacity:.0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+.form{display:flex;flex-direction:column;gap:14px}
+.form select,.form input[type=number],.form input[type=text]{font:inherit;font-size:18px;padding:14px 16px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);width:100%;min-height:52px}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.okmsg{background:var(--good);color:var(--accent-ink);border-radius:18px;padding:14px 16px;font-weight:600}
+.errmsg{background:var(--pink);color:var(--ink);border-radius:18px;padding:14px 16px}
+.btn:disabled{opacity:.5}
+</style>
+
+</head><body>
+<div class="shell">
+
+<!-- ===== หน้าแรก ===== -->
+<main class="screen" id="s-home">
+  <div class="top">
+    <div>
+      <div class="brand">Dreamcrumb</div>
+      <h1 class="hello">สวัสดีค่ะ วันนี้ทำ<br>คอนเฟคอะไรดี</h1>
+      <p class="sub">บอกสูตรมา เดี๋ยวคิดต้นทุนให้</p>
+    </div>
+    <svg class="cloud" width="96" height="70" viewBox="0 0 96 70" aria-hidden="true"><path d="M24 62c-12 0-20-8-20-18 0-9 7-16 16-17C22 14 33 6 47 6c15 0 27 9 29 22 11 1 18 9 18 19 0 9-7 15-17 15z" fill="var(--card)" stroke="var(--line)" stroke-width="3"/><circle cx="36" cy="40" r="3.4" fill="var(--ink)"/><circle cx="58" cy="40" r="3.4" fill="var(--ink)"/><path d="M42 48q6 6 12 0" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><circle cx="28" cy="48" r="5" fill="var(--pink)"/><circle cx="66" cy="48" r="5" fill="var(--pink)"/></svg>
+  </div>
+  <div class="card"><button class="btn" data-go="cost">+ ดูต้นทุนสูตรของฉัน</button></div>
+  <div class="tiles">
+    <button class="tile" data-go="cost"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span><b>สูตรของฉัน</b><span>ดูต้นทุนต่อถุง</span></button>
+    <button class="tile warm" data-go="scan"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><b>ป้ายราคา</b><span>เทียบตอนอยู่หน้าชั้น</span></button>
+    <button class="tile" data-go="scan"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l1-5h14l1 5M5 10v9h14v-9M9 19v-5h6v5"/></svg></span><b>เทียบร้านค้า</b><span>ห้าง · Shopee</span></button>
+    <button class="tile pink" data-go="list"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></span><b>รายการซื้อของ</b><span>สรุปก่อนออกจากบ้าน</span></button>
+  </div>
+  <h2 class="h2">กำไรสัปดาห์นี้</h2>
+  <div class="card ing" id="home-margin"></div>
+  <p class="sample" id="status">กำลังเชื่อมกับสมุดต้นทุน…</p><button class="btn ghost" id="refresh" type="button">รีเฟรชข้อมูลจากชีท</button>
+</main>
+
+<!-- ===== ต้นทุน ===== -->
+<main class="screen" id="s-cost" hidden>
+  <div class="top"><h1 class="hello" style="font-size:26px" id="recName">คอนเฟคเนย</h1><span class="tag" id="bagsTag"></span></div>
+  <div class="card">
+    <div class="note" id="bagLbl">ต้นทุนต่อถุง</div>
+    <div class="big num" id="costPerBag"></div>
+    <div class="note" id="costRange"></div>
+  </div>
+  <div class="price"><div><div style="font-size:14px">ราคาขายแนะนำ</div><div id="marginReal" style="font-size:15px"></div></div><div class="p num" id="priceRound"></div></div>
+
+  <div class="card" style="display:flex;flex-direction:column;gap:14px">
+    <div class="field"><label for="margin">กำไรเป้าหมาย <b class="num" id="marginV"></b></label><input id="margin" type="range" min="10" max="70" step="1" value="40"></div>
+    <div class="field"><label>ราคาเนยก้อน 454 g</label>
+      <div class="seg" role="group" aria-label="ราคาเนย"><button type="button" data-butter="lo" id="bLo" aria-pressed="true"></button><button type="button" data-butter="hi" id="bHi" aria-pressed="false"></button></div>
+    </div>
+  </div>
+
+  <h2 class="h2">ส่วนผสมที่ใช้เงินมากสุด</h2>
+  <div class="card ing" id="ings"></div>
+  <div class="tip"><span aria-hidden="true">💡</span><div>อยากได้กำไร <b id="tipM"></b> ให้ <b>หารต้นทุนด้วย <span id="tipD"></span></b> นะคะ ไม่ใช่คูณ <span id="tipX"></span> เพราะกำไรคิดจากราคาขาย</div></div>
+  <p class="sample" id="costNote"></p>
+</main>
+
+<!-- ===== ป้ายราคา ===== -->
+<main class="screen" id="s-scan" hidden>
+  <h1 class="hello" style="font-size:26px">ป้ายที่สแกนแล้ว</h1>
+  <div class="scanbox"><div class="label-card"><small>เนยสดรสเค็ม (Salted Butter)</small><small style="display:block">225 g · โปรโมชัน</small><strong class="num">฿105</strong></div></div>
+  <div class="card"><div class="note">ถ่ายป้ายแล้วส่งเข้า LINE ของ Dreamcrumb บอทจะอ่านราคา คำนวณต่อกรัม และบันทึกให้ รายการด้านล่างคือป้ายที่บันทึกแล้วจริง</div></div>
+  <h2 class="h2">เทียบราคาต่อ 100 กรัม</h2>
+  <div id="scanGroups" style="display:flex;flex-direction:column;gap:16px"></div>
+  <p class="sample">ข้อมูลจากแท็บ Scans ในสมุดต้นทุน · AI อาจอ่านผิด ตรวจกับป้ายก่อนซื้อ</p>
+</main>
+
+<!-- ===== รายการ ===== -->
+<main class="screen" id="s-list" hidden>
+  <h1 class="hello" style="font-size:26px">รายการซื้อของ</h1>
+  <p class="sub">เลือกเจ้าที่ถูกสุดจากป้ายที่เคยสแกน แตะเพื่อติ๊กเมื่อซื้อแล้ว</p>
+  <div class="card" id="shop"></div>
+  <div class="tip"><span aria-hidden="true">⚠️</span><div>ราคาโปรอาจหมดแล้ว ตรวจป้ายหน้าร้านก่อนซื้อ และเนยสดรสเค็มต้องเช็กว่าสูตรใช้เนยเค็มได้ไหม</div></div>
+  <h2 class="h2">ยังไม่มีราคาจริง</h2>
+  <div class="card ing" id="missing"></div>
+</main>
+
+<!-- ===== บันทึกราคา ===== -->
+<main class="screen" id="s-add" hidden>
+  <h1 class="hello" style="font-size:26px">บันทึกราคาวัตถุดิบ</h1>
+  <p class="sub">เจอของถูกหรือราคาเปลี่ยน กรอกตรงนี้ได้เลย ไม่ต้องพิมพ์คำสั่ง</p>
+  <form class="card form" id="addForm" autocomplete="off">
+    <div class="field"><label for="fIng">วัตถุดิบ</label><select id="fIng"></select></div>
+    <div class="two">
+      <div class="field"><label for="fPrice">ราคา (บาท)</label><input id="fPrice" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 25"></div>
+      <div class="field"><label for="fQty">จำนวนในแพ็ค</label><input id="fQty" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 1000"></div>
+    </div>
+    <div class="field"><label>หน่วยของจำนวน</label>
+      <div class="seg" role="group" aria-label="หน่วย"><button type="button" data-unit="g" aria-pressed="true">กรัม</button><button type="button" data-unit="kg" aria-pressed="false">กก.</button><button type="button" data-unit="pc" aria-pressed="false">ชิ้น/ใบ</button></div>
+    </div>
+    <div class="field"><label for="fShop">ซื้อที่ไหน (ไม่ใส่ก็ได้)</label><input id="fShop" type="text" placeholder="เช่น แม็คโคร"></div>
+    <div class="tip" id="fPreview"><span aria-hidden="true">🧮</span><div>กรอกราคากับจำนวน แล้วจะคำนวณราคาต่อกรัมให้ดูที่นี่</div></div>
+    <button class="btn" id="fSave" type="submit">บันทึกลงสมุดต้นทุน</button>
+    <div id="fMsg" role="status"></div>
+  </form>
+</main>
+
+<nav class="nav" aria-label="เมนูหลัก">
+  <button data-go="home" aria-current="page"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg></span>หน้าแรก</button>
+  <button data-go="cost"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span>ต้นทุน</button>
+  <button data-go="scan"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>ป้ายราคา</button>
+  <button data-go="add"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>บันทึก</button>
+  <button data-go="list"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></span>รายการ</button>
+</nav>
+</div>
+
+<script>
+// ---- ข้อมูลสำรอง (ภาพถ่าย 12 ต.ค. 2569) ใช้เมื่อเชื่อมชีทไม่ได้ ----
+// (ไม่มีข้อมูลลับในไฟล์นี้ นอกจากรหัสบันทึกราคา)
+let D = {
+  ingList:[], nextP:0,
+  name:'คอนเฟคเนย', bags:21, bagG:60, packaging:3, labor:2, gas:1, targetMargin:40,
+  butterLo:272/454, butterHi:285/454, live:false, missing:[],
+  ings:[
+    {n:'คอร์นเฟลกส์', g:500, ppg:0.1364},
+    {n:'เนยก้อน', g:120, butter:true},
+    {n:'นมข้นหวาน', g:170, ppg:0.0789},
+    {n:'น้ำตาล', g:60, ppg:0.025},
+    {n:'ถั่วหิมพานต์', g:100, ppg:0.20},
+    {n:'ลูกเกด', g:200, ppg:0}
+  ],
+  scans:[
+    {item:'คอร์นเฟลกส์', name:'เคลล็อกส์ คอร์นเฟลกส์', w:500, price:65, promo:true},
+    {item:'คอร์นเฟลกส์', name:'เนสท์เล่ คอร์นเฟลกส์', w:500, price:128, promo:true},
+    {item:'เนย', name:'เนยสดรสเค็ม (Salted Butter)', w:225, price:105, promo:true},
+    {item:'เนย', name:'เนยก้อนที่บันทึกไว้ (ราคาต่ำสุด)', w:454, price:272, promo:false}
+  ]
+};
+let butterMode='lo', margin=40;
+const $=(id)=>document.getElementById(id);
+const baht=(x,d=2)=>'฿'+x.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=(t)=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=(v)=>{const x=parseFloat(String(v==null?'':v).replace(/[,฿%\s]/g,''));return isNaN(x)?0:x;};
+
+function calc(mode){
+  const bp = mode==='hi'?D.butterHi:D.butterLo;
+  const rows=D.ings.map(i=>{const ppg=i.butter?bp:i.ppg;return {...i,ppg,cost:i.g*ppg};});
+  const mat=rows.reduce((s,r)=>s+r.cost,0)/D.bags;
+  return {rows, perBag:mat+D.packaging+D.labor+D.gas};
+}
+function render(){
+  const lo=calc('lo'), hi=calc('hi'), cur=calc(butterMode), m=margin/100;
+  const pr=Math.ceil(cur.perBag/(1-m)), realM=(pr-cur.perBag)/pr*100;
+  $('recName').textContent=D.name;
+  $('bagLbl').textContent='ต้นทุนต่อถุง ('+D.bagG+' g)';
+  $('costPerBag').textContent=baht(cur.perBag);
+  $('bagsTag').textContent='ได้ '+D.bags+' ถุงต่อสูตร';
+  $('costRange').textContent='ช่วงต้นทุนตามราคาเนย '+baht(Math.min(lo.perBag,hi.perBag))+' – '+baht(Math.max(lo.perBag,hi.perBag));
+  $('priceRound').textContent='฿'+pr;
+  $('marginReal').textContent='กำไรที่ได้ ประมาณ '+realM.toFixed(0)+'%';
+  $('marginV').textContent=margin+'%';
+  $('tipM').textContent=margin+'%';$('tipD').textContent=(1-m).toFixed(2);$('tipX').textContent=(1+m).toFixed(2);
+  $('bLo').textContent='ต่ำสุด ฿'+Math.round(D.butterLo*454);
+  $('bHi').textContent='สูงสุด ฿'+Math.round(D.butterHi*454);
+  $('bLo').setAttribute('aria-pressed',butterMode==='lo');$('bHi').setAttribute('aria-pressed',butterMode==='hi');
+  const max=Math.max(1,...cur.rows.map(r=>r.cost));
+  $('ings').innerHTML=[...cur.rows].sort((a,b)=>b.cost-a.cost).map(r=>
+    `<div class="row"><span>${esc(r.n)} ${r.g} g ${r.ppg>0?'':'<span class="tag guess">ยังไม่มีราคา</span>'}</span><b class="num">${baht(r.cost,0)}</b></div><div class="bar"><i style="width:${(r.cost/max*100).toFixed(0)}%"></i></div>`
+  ).join('')+`<div class="note" style="border-top:1px dashed var(--line);padding-top:10px">บวกต่อถุง: บรรจุภัณฑ์ ฿${D.packaging} · ค่าแรง ฿${D.labor} · แก๊ส/ไฟ ฿${D.gas}</div>`;
+  $('home-margin').innerHTML=`<div class="row"><b>${esc(D.name)}</b><b class="num">${realM.toFixed(0)}%</b></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,realM)).toFixed(0)}%"></i></div><div class="note">ราคาขายแนะนำ ฿${pr} ต้นทุน ${baht(cur.perBag)} ต่อถุง</div>`;
+  const nm=D.ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n);
+  $('costNote').textContent=(D.live?'ตัวเลขทั้งหมดอ่านสดจากสมุดต้นทุน':'ข้อมูลสำรอง (ยังไม่ได้เชื่อมชีท)')+(nm.length?' · ยังไม่มีราคา: '+nm.join(', ')+' จึงนับเป็น ฿0 ต้นทุนจริงจะสูงกว่านี้':'')+' · ค่าแรง ค่าแก๊ส บรรจุภัณฑ์ยังเป็นค่าสมมติ';
+}
+function bestOf(it){return D.scans.filter(s=>s.item===it).map(s=>({...s,p100:s.price/s.w*100})).sort((a,b)=>a.p100-b.p100);}
+function renderScans(){
+  const items=[...new Set(D.scans.map(s=>s.item))];
+  $('scanGroups').innerHTML=items.map(it=>`<div class="card"><h3 style="font-size:18px;margin-bottom:6px">${esc(it)}</h3><div class="cmp">`+bestOf(it).map((r,i)=>
+    `<div class="r"><div class="l"><b>${esc(r.name)}</b><span class="note">${r.w} g · ${baht(r.price,0)}${r.promo?' (โปร)':''}</span></div><div style="text-align:right">${i===0?'<span class="tag best">ถูกสุด</span><br>':''}<b class="num">${baht(r.p100,1)}</b><div class="note">ต่อ 100 g</div></div></div>`).join('')+`</div></div>`).join('')||'<div class="card note">ยังไม่มีป้ายที่สแกน ถ่ายป้ายส่งเข้า LINE ได้เลย</div>';
+  const last=D.scans[D.scans.length-1];
+  const lc=D.scans.filter(s=>s.promo).slice(-1)[0]||last;
+  if(lc) document.querySelector('.label-card').innerHTML=`<small>${esc(lc.name)}</small><small style="display:block">${lc.w} g${lc.promo?' · โปรโมชัน':''}</small><strong class="num">฿${lc.price}</strong>`;
+}
+function renderList(){
+  const items=[...new Set(D.scans.map(s=>s.item))];
+  $('shop').innerHTML=items.map((it,k)=>{const b=bestOf(it)[0];
+    return `<label class="chk"><input type="checkbox" id="c${k}"><span class="t"><b>${esc(it)}</b> · ${esc(b.name)}<br><span class="note">${baht(b.price,0)} / ${b.w} g = ${baht(b.p100,1)} ต่อ 100 g${b.promo?' (โปร)':''}</span></span></label>`;}).join('')||'<div class="note">ยังไม่มีป้ายที่สแกน</div>';
+  const miss=[...new Set([...D.ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n),...D.missing])];
+  $('missing').innerHTML=miss.map(n=>`<div class="row"><span>${esc(n)}</span><span class="tag guess">ถ่ายป้ายส่งมา</span></div>`).join('')||'<div class="note">ทุกอย่างมีราคาแล้ว</div>';
+}
+function all(){render();renderScans();renderList();}
+
+// ---- อ่านข้อมูลจากสมุดต้นทุนผ่าน n8n ----
+const API='https://sasikranforteamlt9.app.n8n.cloud/webhook/', PRICE_KEY='dc-ab5d546cf591';
+async function loadSheet(){
+  const st=$('status'); st.textContent='กำลังอ่านสมุดต้นทุน…';
+  try{
+    const r=await fetch(API+'dreamcrumb-data',{cache:'no-store'});
+    if(!r.ok) throw new Error('http '+r.status);
+    const j=await r.json();
+    if(!j||!j.ok) throw new Error('bad data');
+    D={...j,live:true}; fillIngs(); margin=Math.round(j.margin)||40; $('margin').value=margin;
+    st.textContent='อ่านจากสมุดต้นทุนล่าสุดเมื่อ '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
+  }catch(e){
+    D.live=false; st.textContent='เชื่อมสมุดไม่ได้ในตอนนี้ (ตรวจว่า workflow ใน n8n ยัง Publish อยู่) · แสดงข้อมูลสำรอง';
+  }
+  all();
+}
+// tabs
+const screens=['home','cost','scan','add','list'];
+function go(t){
+  screens.forEach(s=>{$('s-'+s).hidden=s!==t;});
+  document.querySelectorAll('.nav button').forEach(b=>{if(b.dataset.go===t)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  window.scrollTo(0,0);
+}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){go(g.dataset.go);return;}
+  const b=e.target.closest('[data-butter]'); if(b){butterMode=b.dataset.butter;render();return;}
+  if(e.target.closest('#refresh')) loadSheet();
+});
+$('margin').addEventListener('input',e=>{margin=+e.target.value;render();});
+
+// ---- ฟอร์มบันทึกราคา ----
+let unit='g';
+function fillIngs(){
+  const sel=$('fIng'), cur=sel.value;
+  sel.innerHTML='<option value="">เลือกวัตถุดิบ…</option>'+(D.ingList||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
+  if(cur) sel.value=cur;
+}
+function formCalc(){
+  const price=num($('fPrice').value); let qty=num($('fQty').value);
+  if(unit==='kg') qty*=1000;
+  return {price,qty,ppg:(price>0&&qty>0)?price/qty:0};
+}
+function formPreview(){
+  const c=formCalc(), el=$('fPreview').lastElementChild;
+  el.textContent=c.ppg>0?`ราคาต่อ${unit==='pc'?'ชิ้น':'กรัม'} ${baht(c.ppg,4)}${unit==='pc'?'':' · ต่อ 100 g '+baht(c.ppg*100,2)}`:'กรอกราคากับจำนวน แล้วจะคำนวณราคาต่อกรัมให้ดูที่นี่';
+}
+async function saveForm(e){
+  e.preventDefault();
+  const msg=$('fMsg'), id=$('fIng').value, c=formCalc();
+  const bad=(t)=>{msg.className='errmsg';msg.textContent=t;};
+  if(!id) return bad('เลือกวัตถุดิบก่อนนะคะ');
+  if(!(c.ppg>0)) return bad('ใส่ราคากับจำนวนที่มากกว่า 0 ค่ะ');
+  if(!D.live) return bad('ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
+  const btn=$('fSave'); btn.disabled=true; msg.className=''; msg.textContent='';
+  try{
+    const r=await fetch(API+'dreamcrumb-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PRICE_KEY,ingredient_id:id,price:c.price,qty:num($('fQty').value),unit:unit==='kg'?'kg':'g',shop:$('fShop').value.trim()})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'ไม่สำเร็จ');
+    const nm=(D.ingList.find(i=>i.id===id)||{}).name||id;
+    $('fPrice').value='';$('fQty').value='';$('fShop').value='';formPreview();
+    await loadSheet();
+    msg.className='okmsg'; msg.textContent='บันทึกแล้ว: '+nm+' '+baht(c.ppg,4)+' ต่อ'+(unit==='pc'?'ชิ้น':'กรัม')+' · ต้นทุนอัปเดตแล้ว';
+  }catch(x){ bad('บันทึกไม่สำเร็จ: '+(x&&x.message||'ลองใหม่อีกครั้ง')+' · ตรวจแท็บ Prices ก่อนกดซ้ำนะคะ'); }
+  btn.disabled=false;
+}
+$('addForm').addEventListener('submit',saveForm);
+$('addForm').addEventListener('input',formPreview);
+document.addEventListener('click',e=>{const u=e.target.closest('[data-unit]');if(u){unit=u.dataset.unit;document.querySelectorAll('[data-unit]').forEach(x=>x.setAttribute('aria-pressed',x===u));formPreview();}});
+all(); loadSheet();
+</script>
+
+</body></html>
