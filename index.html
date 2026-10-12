@@ -189,6 +189,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
   </form>
 
   <form class="card form" id="recForm" autocomplete="off" data-pane="rec" hidden>
+    <datalist id="ingDL"></datalist>
     <p class="sub" style="margin:0">สร้างสูตรใหม่ เช่น คุกกี้ ระบบคิดต้นทุนให้จากราคาที่บันทึกไว้</p>
     <div class="field"><label for="rName">ชื่อสูตร</label><input id="rName" type="text" placeholder="เช่น คุกกี้เนยสด"></div>
     <div class="two">
@@ -196,7 +197,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
       <div class="field"><label for="rUnit">ขายเป็น</label><input id="rUnit" type="text" value="ถุง" placeholder="ถุง ชาม กล่อง"></div>
     </div>
     <div class="field"><label for="rBagG">น้ำหนักต่อหน่วย (กรัม) ไม่ใส่ก็ได้</label><input id="rBagG" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 60"></div>
-    <div class="field"><label>ส่วนผสมและบรรจุภัณฑ์ต่อ 1 สูตร (กรัม หรือ จำนวนชิ้น ตามหน่วยของวัตถุดิบ)</label><div id="rItems" style="display:flex;flex-direction:column;gap:10px"></div><button class="btn ghost" type="button" id="rAddRow" style="font-size:16px;padding:10px 16px">+ เพิ่มส่วนผสม</button></div>
+    <div class="field"><label>ส่วนผสมและบรรจุภัณฑ์ต่อ 1 สูตร <span class="note">พิมพ์ชื่อได้เลย ถ้าไม่มีในสมุดจะเพิ่มให้ใหม่</span></label><div id="rItems" style="display:flex;flex-direction:column;gap:10px"></div><button class="btn ghost" type="button" id="rAddRow" style="font-size:16px;padding:10px 16px">+ เพิ่มส่วนผสม</button></div>
     <div class="two">
       <div class="field"><label for="rPack">บรรจุภัณฑ์อื่นๆ ต่อหน่วย (฿) ไม่ใส่ก็ได้</label><input id="rPack" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 1.14"></div>
       <div class="field"><label for="rLabor">ค่าแรงต่อหน่วย (฿)</label><input id="rLabor" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 2"></div>
@@ -231,7 +232,7 @@ let rIdx=0, butterMode='lo', margin=40, unit='g', iunit='g';
 const $=(id)=>document.getElementById(id);
 const baht=(x,d=2)=>'฿'+x.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
 const esc=(t)=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const num=(v)=>{const x=parseFloat(String(v==null?'':v).replace(/[,฿%\s]/g,''));return isNaN(x)?0:x;};
+const num=(v)=>{let t=String(v==null?'':v).replace(/[฿%\s]/g,'');t=/^\d+,\d{1,2}$/.test(t)?t.replace(',','.'):t.replace(/,/g,'');const x=parseFloat(t);return isNaN(x)?0:x;};
 const R=()=>D.recipes[rIdx]||{name:'ยังไม่มีสูตร',ings:[],bags:1,bagG:0,packaging:0,labor:0,gas:0,margin:40};
 
 function calc(rec,mode){
@@ -242,7 +243,7 @@ function calc(rec,mode){
 }
 function render(){
   const rec=R(), lo=calc(rec,'lo'), hi=calc(rec,'hi'), cur=calc(rec,butterMode), m=margin/100;
-  const pr=Math.ceil(cur.perBag/(1-m)), realM=pr>0?(pr-cur.perBag)/pr*100:0;
+  const mm=Math.min(Math.max(m,0),0.9), pr=Math.ceil(+(cur.perBag/(1-mm)).toFixed(6)), realM=pr>0?(pr-cur.perBag)/pr*100:0;
   $('recName').textContent=rec.name;
   const yu=rec.yieldUnit||'ถุง';
   $('bagLbl').textContent='ต้นทุนต่อ'+yu+(rec.bagG>0?' ('+rec.bagG+' g)':'');
@@ -250,7 +251,8 @@ function render(){
   $('bagsTag').textContent='ได้ '+rec.bags+' '+yu+'ต่อสูตร';
   $('costRange').textContent=D.butterHi>0&&rec.ings.some(i=>i.butter)?'ช่วงต้นทุนตามราคาเนย '+baht(Math.min(lo.perBag,hi.perBag))+' – '+baht(Math.max(lo.perBag,hi.perBag)):'';
   $('priceRound').textContent='฿'+pr;
-  $('marginReal').textContent='กำไรที่ได้ ประมาณ '+realM.toFixed(0)+'%';
+  const miss0=cur.rows.filter(r=>!(r.ppg>0));
+  $('marginReal').textContent=(miss0.length?'⚠ ต้นทุนยังไม่ครบ (ขาดราคา '+miss0.length+' อย่าง) · ':'')+'กำไรที่ได้ ประมาณ '+realM.toFixed(0)+'%';
   $('marginV').textContent=margin+'%';
   $('tipM').textContent=margin+'%';$('tipD').textContent=(1-m).toFixed(2);$('tipX').textContent=(1+m).toFixed(2);
   const hasB=rec.ings.some(i=>i.butter);
@@ -261,9 +263,9 @@ function render(){
   $('ings').innerHTML=[...cur.rows].sort((a,b)=>b.cost-a.cost).map(r=>
     `<div class="row"><span>${esc(r.n)} ${r.g} ${r.u==='pc'?'ชิ้น':'g'} ${r.ppg>0?'':'<span class="tag guess">ยังไม่มีราคา</span>'}</span><b class="num">${baht(r.cost,0)}</b></div><div class="bar"><i style="width:${(r.cost/max*100).toFixed(0)}%"></i></div>`
   ).join('')+`<div class="note" style="border-top:1px dashed var(--line);padding-top:10px">บวกต่อ${yu}: ค่าบรรจุภัณฑ์อื่นๆ ฿${rec.packaging.toFixed(2)} · ค่าแรง ฿${rec.labor} · แก๊ส/ไฟ ฿${rec.gas}</div>`;
-  $('home-margin').innerHTML=D.recipes.map(x=>{const c=calc(x,butterMode),p=Math.ceil(c.perBag/(1-x.margin/100)),mm=p>0?(p-c.perBag)/p*100:0;
+  $('home-margin').innerHTML=D.recipes.map(x=>{const c=calc(x,butterMode),p=Math.ceil(+(c.perBag/(1-Math.min(Math.max(x.margin/100,0),0.9))).toFixed(6)),mm=p>0?(p-c.perBag)/p*100:0;
     return `<div class="row"><b>${esc(x.name)}</b><b class="num">${mm.toFixed(0)}%</b></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,mm)).toFixed(0)}%"></i></div><div class="note">ราคาขายแนะนำ ฿${p} ต้นทุน ${baht(c.perBag)} ต่อ${x.yieldUnit||'ถุง'}</div>`;}).join('<div style="height:8px"></div>');
-  const nm=[...new Set(rec.ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n))];
+  const nm=[...new Set(cur.rows.filter(i=>!(i.ppg>0)).map(i=>i.n))];
   $('costNote').textContent=(D.live?'ตัวเลขอ่านสดจากสมุดต้นทุน':'ข้อมูลสำรอง (ยังไม่ได้เชื่อมสมุด)')+(nm.length?' · ยังไม่มีราคา: '+nm.join(', ')+' จึงนับเป็น ฿0 ต้นทุนจริงจะสูงกว่านี้':'');
   $('recWrap').hidden=D.recipes.length<2;
   $('recSel').innerHTML=D.recipes.map((x,i)=>`<option value="${i}"${i===rIdx?' selected':''}>${esc(x.name)}</option>`).join('');
@@ -301,16 +303,20 @@ async function loadSheet(keepId){
   all();
 }
 async function post(path,body){
-  const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PRICE_KEY,...body})});
-  const j=await r.json(); if(!j.ok) throw new Error(j.error||'ไม่สำเร็จ'); return j;
+  let r; try{ r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PRICE_KEY,...body})}); }
+  catch(e){ throw new Error('เชื่อมสมุดไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); }
+  let j; try{ j=await r.json(); }catch(e){ throw new Error('ระบบหลังบ้านตอบผิดปกติ (รหัส '+r.status+') ลองใหม่อีกครั้ง'); }
+  if(!j.ok) throw new Error(j.error||'ไม่สำเร็จ'); return j;
 }
-const say=(id,ok,t)=>{const m=$(id);m.className=ok?'okmsg':'errmsg';m.textContent=t;};
+const say=(id,ok,t)=>{const m=$(id);m.className=ok?'okmsg':'errmsg';m.textContent=t;try{m.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}};
 function fillIngs(){
   const opts='<option value="">เลือกวัตถุดิบ…</option>'+(D.ingList||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
   const sel=$('fIng'),cur=sel.value; sel.innerHTML=opts; if(cur) sel.value=cur;
-  const ropts=opts+'<option value="__new">➕ วัตถุดิบใหม่ (พิมพ์ชื่อเอง)…</option>';
-  document.querySelectorAll('#rItems select[data-row-ing]').forEach(s=>{const c=s.value;s.innerHTML=ropts;s.value=c;});
+  $('ingDL').innerHTML=(D.ingList||[]).map(i=>`<option value="${esc(i.name)}"></option>`).join('');
+  document.querySelectorAll('#rItems .rw').forEach(refreshRow);
 }
+const normName=(t)=>String(t||'').trim().replace(/\s+/g,' ').normalize('NFC').toLowerCase();
+const findIng=(t)=>{const n=normName(t);return n?(D.ingList||[]).find(i=>normName(i.name)===n):null;};
 // ---- ราคา ----
 function formCalc(){const price=num($('fPrice').value);let qty=num($('fQty').value);if(unit==='kg')qty*=1000;return {price,qty,ppg:(price>0&&qty>0)?price/qty:0};}
 function formPreview(){const c=formCalc(),el=$('fPreview').lastElementChild;
@@ -333,6 +339,7 @@ async function savePrice(e){
 async function saveIng(e){
   e.preventDefault(); const name=$('iName').value.trim();
   if(!name) return say('iMsg',false,'ใส่ชื่อวัตถุดิบก่อนนะคะ');
+  if(findIng(name)) return say('iMsg',false,'มี "'+name+'" ในสมุดแล้วค่ะ ไปใส่ราคาที่แท็บ "ราคา" ได้เลย');
   if(!D.live) return say('iMsg',false,'ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
   const btn=$('iSave');btn.disabled=true;
   try{ await post('dreamcrumb-ingredient',{name,unit:iunit}); $('iName').value=''; await loadSheet(); say('iMsg',true,'เพิ่มแล้ว: '+name+' · ไปแท็บ "ราคา" เพื่อใส่ราคาต่อได้เลย'); }
@@ -340,43 +347,84 @@ async function saveIng(e){
   btn.disabled=false;
 }
 // ---- สูตรใหม่ ----
-const IS='font:inherit;font-size:16px;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);min-height:48px;width:100%';
+const IS='font:inherit;font-size:16px;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);min-height:48px;width:100%;box-sizing:border-box';
+const LB='font-size:13px;opacity:.75;display:block;margin:0 0 4px';
+function unitOpts(kind){return kind==='pc'?'<option value="pc">ชิ้น/ใบ/ฟอง</option>':'<option value="g">กรัม</option><option value="kg">กก.</option>';}
 function addRow(){
-  const w=document.createElement('div'); w.className='rw'; w.style.cssText='display:flex;flex-direction:column;gap:8px';
-  w.innerHTML='<div class="two" style="grid-template-columns:1fr 96px 44px;align-items:center"><select aria-label="วัตถุดิบ" data-row-ing style="'+IS+'"></select><input type="number" inputmode="decimal" min="0" step="any" placeholder="กรัม" aria-label="จำนวนที่ใช้" style="'+IS+'"><button type="button" aria-label="ลบแถว" class="btn ghost" style="padding:8px;font-size:18px">×</button></div>'
-   +'<div class="newbox" hidden style="display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:var(--soft,#eef5ff)"><b style="font-size:15px">วัตถุดิบใหม่</b>'
-   +'<input class="nb-name" type="text" placeholder="ชื่อ เช่น เส้นหมี่" aria-label="ชื่อวัตถุดิบใหม่" style="'+IS+'">'
-   +'<select class="nb-unit" aria-label="นับเป็น" style="'+IS+'"><option value="g">นับเป็นกรัม</option><option value="pc">นับเป็นชิ้น/ใบ</option></select>'
-   +'<div class="two"><input class="nb-price" type="number" inputmode="decimal" min="0" step="any" placeholder="ราคาที่ซื้อ (บาท)" aria-label="ราคาที่ซื้อ" style="'+IS+'"><input class="nb-qty" type="number" inputmode="decimal" min="0" step="any" placeholder="ซื้อมากี่กรัม/ชิ้น" aria-label="ซื้อมาเท่าไร" style="'+IS+'"></div>'
-   +'<span style="font-size:13px;opacity:.7">ใส่ราคาไม่ได้ก็ข้ามได้ ไปใส่ทีหลังที่แท็บ "บันทึก"</span></div>';
-  $('rItems').appendChild(w); fillIngs();
+  const w=document.createElement('div'); w.className='rw'; w.style.cssText='display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;border:1px solid var(--line)';
+  w.innerHTML='<input class="r-name" list="ingDL" type="text" placeholder="พิมพ์ชื่อวัตถุดิบ เช่น แป้งสาลี" aria-label="ชื่อวัตถุดิบ" style="'+IS+'">'
+   +'<div class="two" style="grid-template-columns:1fr 112px 44px;align-items:center"><input class="r-qty" type="text" inputmode="decimal" placeholder="ใช้เท่าไรต่อสูตร" aria-label="จำนวนที่ใช้ต่อสูตร" style="'+IS+'"><select class="r-unit" aria-label="หน่วยที่ใช้" style="'+IS+'">'+unitOpts('g')+'</select><button type="button" aria-label="ลบแถว" class="btn ghost" style="padding:8px;font-size:18px">×</button></div>'
+   +'<div class="rbadge note"></div>'
+   +'<div class="newbox" hidden style="display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:var(--soft,#eef5ff)"><b style="font-size:15px">วัตถุดิบใหม่ ใส่ราคาให้ด้วย (ข้ามได้)</b>'
+   +'<div><span style="'+LB+'">นับวัตถุดิบนี้เป็น</span><select class="nb-unit" aria-label="นับเป็น" style="'+IS+'"><option value="g">กรัม (ของที่ชั่งน้ำหนัก)</option><option value="pc">ชิ้น/ใบ/ฟอง (ของนับเป็นชิ้น)</option></select></div>'
+   +'<div><span style="'+LB+'">ราคาที่ซื้อ (บาท)</span><input class="nb-price" type="text" inputmode="decimal" placeholder="เช่น 120" aria-label="ราคาที่ซื้อ" style="'+IS+'"></div>'
+   +'<div><span style="'+LB+'">ซื้อมาเท่าไรต่อราคานั้น</span><div class="two" style="grid-template-columns:1fr 112px"><input class="nb-qty" type="text" inputmode="decimal" placeholder="เช่น 1000" aria-label="ซื้อมาเท่าไร" style="'+IS+'"><select class="nb-buyunit" aria-label="หน่วยที่ซื้อ" style="'+IS+'">'+unitOpts('g')+'</select></div></div>'
+   +'</div>';
+  $('rItems').appendChild(w); refreshRow(w);
 }
+function refreshRow(w){
+  const name=w.querySelector('.r-name').value, m=findIng(name), nb=w.querySelector('.newbox'), badge=w.querySelector('.rbadge');
+  const showNew=!!normName(name)&&(!m||(w.dataset.created&&w.dataset.needPrice==='1'));
+  nb.hidden=!showNew;
+  const kind=m?m.unit:w.querySelector('.nb-unit').value;
+  const ru=w.querySelector('.r-unit'), want=kind==='pc'?'pc':'g', have=ru.options[0]&&ru.options[0].value;
+  if(have!==want){ru.innerHTML=unitOpts(kind);}
+  const bu=w.querySelector('.nb-buyunit'); if((bu.options[0]||{}).value!==want){bu.innerHTML=unitOpts(kind);}
+  w.querySelector('.r-qty').placeholder=kind==='pc'?'ใช้กี่ชิ้น/ใบ/ฟอง':'ใช้กี่กรัม';
+  badge.textContent=!normName(name)?'':(m?'✓ มีในสมุดแล้ว (นับเป็น'+(m.unit==='pc'?'ชิ้น':'กรัม')+')':'ใหม่ ไม่มีในสมุด จะเพิ่มให้');
+  w.style.outline='';
+}
+const toBase=(v,u)=>num(v)*(u==='kg'?1000:1);
+function bad(w,msg,errs){w.style.outline='3px solid #e0527a';errs.push({w,msg});}
 async function saveRec(e){
   e.preventDefault();
-  const rws=[...document.querySelectorAll('#rItems .rw')].map(w=>({w,id:w.querySelector('select[data-row-ing]').value,qty:num(w.querySelector('.two input').value)})).filter(x=>x.id&&x.qty>0);
-  for(const x of rws){if(x.id==='__new'&&!x.w.querySelector('.nb-name').value.trim()) return say('rMsg',false,'ใส่ชื่อวัตถุดิบใหม่ด้วยค่ะ');}
-  const name=$('rName').value.trim();
+  const btn=$('rSave'); if(btn.disabled) return;
+  const name=$('rName').value.trim(), errs=[];
+  document.querySelectorAll('#rItems .rw').forEach(w=>w.style.outline='');
   if(!name) return say('rMsg',false,'ใส่ชื่อสูตรก่อนนะคะ');
-  if(!(num($('rBags').value)>0)) return say('rMsg',false,'ใส่จำนวนที่ได้ต่อ 1 สูตรด้วยค่ะ');
+  if(!(num($('rBags').value)>0)) return say('rMsg',false,'ใส่ว่าสูตรนี้ได้กี่หน่วยด้วยค่ะ (ช่อง "ได้กี่หน่วยต่อ 1 สูตร")');
+  const seen={}; const rws=[];
+  [...document.querySelectorAll('#rItems .rw')].forEach((w,i)=>{
+    const nm=w.querySelector('.r-name').value.trim(), qty=num(w.querySelector('.r-qty').value);
+    const blank=!nm&&!w.querySelector('.r-qty').value.trim(); if(blank) return;
+    const n=i+1;
+    if(!nm) return bad(w,'ส่วนผสมแถวที่ '+n+' ยังไม่ได้พิมพ์ชื่อวัตถุดิบ',errs);
+    if(!(qty>0)) return bad(w,'ส่วนผสมแถวที่ '+n+' ("'+nm+'") ยังไม่ได้ใส่จำนวนที่ใช้ต่อสูตร',errs);
+    const key=normName(nm); if(seen[key]) return bad(w,'"'+nm+'" ซ้ำกับแถวที่ '+seen[key]+' รวมเป็นแถวเดียวนะคะ',errs); seen[key]=n;
+    const m=findIng(nm);
+    if(!m&&!w.dataset.created){
+      const pr=num(w.querySelector('.nb-price').value), pq=num(w.querySelector('.nb-qty').value);
+      const hp=w.querySelector('.nb-price').value.trim(), hq=w.querySelector('.nb-qty').value.trim();
+      if((hp&&!hq)||(!hp&&hq)||(hp&&!(pr>0))||(hq&&!(pq>0))) return bad(w,'วัตถุดิบใหม่ "'+nm+'": ใส่ทั้งราคาและจำนวนที่ซื้อให้ครบ หรือเว้นว่างทั้งคู่',errs);
+    }
+    rws.push({w,nm,qty});
+  });
+  if(errs.length){const f=errs[0];say('rMsg',false,f.msg+(errs.length>1?' (และอีก '+(errs.length-1)+' จุด)':''));f.w.scrollIntoView({block:'center',behavior:'smooth'});return;}
   if(!rws.length) return say('rMsg',false,'เพิ่มส่วนผสมอย่างน้อย 1 อย่างค่ะ');
   if(!D.live) return say('rMsg',false,'ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
-  const btn=$('rSave');btn.disabled=true;
+  btn.disabled=true; const done=[];
   try{
     const items=[];
     for(const x of rws){
-      let id=x.id;
-      if(id==='__new'){
-        const nm=x.w.querySelector('.nb-name').value.trim(),un=x.w.querySelector('.nb-unit').value;
-        id=(await post('dreamcrumb-ingredient',{name:nm,unit:un})).id;
-        const pr=num(x.w.querySelector('.nb-price').value),pq=num(x.w.querySelector('.nb-qty').value);
-        if(pr>0&&pq>0) await post('dreamcrumb-price',{ingredient_id:id,price:pr,qty:pq,unit:'g',shop:''});
+      let m=findIng(x.nm), id=m?m.id:x.w.dataset.created;
+      if(!id){
+        const un=x.w.querySelector('.nb-unit').value;
+        id=(await post('dreamcrumb-ingredient',{name:x.nm,unit:un})).id;
+        x.w.dataset.created=id; D.ingList.push({id,name:x.nm,unit:un}); done.push(x.nm);
+        x.w.dataset.needPrice=x.w.querySelector('.nb-price').value.trim()?'1':'';
       }
-      items.push({ingredient_id:id,qty:x.qty});
+      if(x.w.dataset.needPrice==='1'){
+        const bu=x.w.querySelector('.nb-buyunit').value;
+        await post('dreamcrumb-price',{ingredient_id:id,price:num(x.w.querySelector('.nb-price').value),qty:toBase(x.w.querySelector('.nb-qty').value,bu),unit:'g',shop:''});
+        x.w.dataset.needPrice='';
+      }
+      items.push({ingredient_id:id,qty:toBase(x.w.querySelector('.r-qty').value,x.w.querySelector('.r-unit').value)});
     }
-    const j=await post('dreamcrumb-recipe',{name,bags:num($('rBags').value),yieldUnit:$('rUnit').value.trim()||'ถุง',bagG:num($('rBagG').value),packaging:num($('rPack').value),labor:num($('rLabor').value),gas:num($('rGas').value),margin:num($('rMargin').value)||40,items});
-    ['rName','rBags','rBagG','rPack','rLabor','rGas'].forEach(i=>$(i).value='');$('rItems').innerHTML='';addRow();
-    await loadSheet(j.id); say('rMsg',true,'สร้างสูตร "'+name+'" แล้ว · ดูที่แท็บ "ต้นทุน" ถ้าวัตถุดิบไหนยังไม่มีราคา ไปใส่ที่แท็บ "ราคา"');
-  }catch(x){say('rMsg',false,'สร้างไม่สำเร็จ: '+(x.message||'ลองใหม่'));}
+    const mg=Math.min(90,Math.max(1,num($('rMargin').value)||40));
+    const j=await post('dreamcrumb-recipe',{name,bags:num($('rBags').value),yieldUnit:$('rUnit').value.trim()||'ถุง',bagG:num($('rBagG').value),packaging:num($('rPack').value),labor:num($('rLabor').value),gas:num($('rGas').value),margin:mg,items});
+    ['rName','rBags','rBagG','rPack','rLabor','rGas'].forEach(i=>$(i).value='');$('rUnit').value='ถุง';$('rMargin').value=40;$('rItems').innerHTML='';addRow();
+    await loadSheet(j.id); say('rMsg',true,'สร้างสูตร "'+name+'" แล้ว · ดูที่แท็บ "ต้นทุน" ถ้าวัตถุดิบไหนยังไม่มีราคา ไปใส่ที่แท็บ "บันทึก"');
+  }catch(x){say('rMsg',false,'ยังไม่สำเร็จ: '+(x.message||'ลองใหม่')+(done.length?' · เพิ่มวัตถุดิบไปแล้ว: '+done.join(', ')+' กดสร้างสูตรอีกครั้งได้เลย ระบบจะไม่สร้างซ้ำ':' · กดสร้างสูตรอีกครั้งได้เลย'));}
   btn.disabled=false;
 }
 // ---- เมนู ----
@@ -394,10 +442,16 @@ document.addEventListener('click',e=>{
   const tb=e.target.closest('[data-tab]'); if(tb){document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x===tb));document.querySelectorAll('[data-pane]').forEach(f=>{f.hidden=f.dataset.pane!==tb.dataset.tab;});return;}
   if(e.target.closest('#refresh')){loadSheet();return;}
   if(e.target.closest('#rAddRow')){addRow();return;}
-  const rm=e.target.closest('#rItems .two .btn'); if(rm){const rows=document.querySelectorAll('#rItems .rw');if(rows.length>1)rm.closest('.rw').remove();}
+  const rm=e.target.closest('#rItems .rw .two .btn'); if(rm){const rows=document.querySelectorAll('#rItems .rw');const w=rm.closest('.rw');if(rows.length>1){w.remove();}else{w.querySelectorAll('input').forEach(i=>i.value='');delete w.dataset.created;delete w.dataset.needPrice;refreshRow(w);}}
 });
-document.addEventListener('change',e=>{const sel=e.target.closest('[data-row-ing]');if(sel){const nb=sel.closest('.rw').querySelector('.newbox');nb.hidden=sel.value!=='__new';const u=sel.value==='__new'?nb.querySelector('.nb-unit').value:(D.ingList.find(i=>i.id===sel.value)||{}).unit;sel.parentElement.querySelector('input').placeholder=u==='pc'?'ชิ้น':'กรัม';}
-  const nu=e.target.closest('.nb-unit');if(nu){nu.closest('.rw').querySelector('.two input').placeholder=nu.value==='pc'?'ชิ้น':'กรัม';}});
+document.addEventListener('input',e=>{const n=e.target.closest('.r-name');if(n)refreshRow(n.closest('.rw'));});
+document.addEventListener('change',e=>{
+  const w=e.target.closest('.rw'); if(w&&(e.target.closest('.r-name')||e.target.closest('.nb-unit'))) refreshRow(w);
+  if(e.target.id==='fIng'){const u=(D.ingList.find(i=>i.id===e.target.value)||{}).unit;
+    document.querySelectorAll('[data-unit]').forEach(b=>{b.hidden=(u==='pc')?b.dataset.unit!=='pc':b.dataset.unit==='pc';});
+    if(u==='pc'){unit='pc';}else if(unit==='pc'){unit='g';}
+    document.querySelectorAll('[data-unit]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.unit===unit));formPreview();}
+});
 $('margin').addEventListener('input',e=>{margin=+e.target.value;render();});
 $('recSel').addEventListener('change',e=>{rIdx=+e.target.value;margin=Math.round(R().margin)||40;$('margin').value=margin;all();});
 $('addForm').addEventListener('submit',savePrice);$('addForm').addEventListener('input',formPreview);
