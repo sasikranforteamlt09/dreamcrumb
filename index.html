@@ -115,6 +115,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 
 <!-- ===== ต้นทุน ===== -->
 <main class="screen" id="s-cost" hidden>
+  <div class="field" id="recWrap" hidden><label for="recSel">เลือกสูตร</label><select id="recSel" style="font:inherit;font-size:18px;padding:12px 14px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);width:100%"></select></div>
   <div class="top"><h1 class="hello" style="font-size:26px" id="recName">คอนเฟคเนย</h1><span class="tag" id="bagsTag"></span></div>
   <div class="card">
     <div class="note" id="bagLbl">ต้นทุนต่อถุง</div>
@@ -125,7 +126,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 
   <div class="card" style="display:flex;flex-direction:column;gap:14px">
     <div class="field"><label for="margin">กำไรเป้าหมาย <b class="num" id="marginV"></b></label><input id="margin" type="range" min="10" max="70" step="1" value="40"></div>
-    <div class="field"><label>ราคาเนยก้อน 454 g</label>
+    <div class="field" id="butterField"><label>ราคาเนยก้อน 454 g</label>
       <div class="seg" role="group" aria-label="ราคาเนย"><button type="button" data-butter="lo" id="bLo" aria-pressed="true"></button><button type="button" data-butter="hi" id="bHi" aria-pressed="false"></button></div>
     </div>
   </div>
@@ -156,11 +157,13 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
   <div class="card ing" id="missing"></div>
 </main>
 
-<!-- ===== บันทึกราคา ===== -->
+<!-- ===== บันทึก ===== -->
 <main class="screen" id="s-add" hidden>
-  <h1 class="hello" style="font-size:26px">บันทึกราคาวัตถุดิบ</h1>
-  <p class="sub">เจอของถูกหรือราคาเปลี่ยน กรอกตรงนี้ได้เลย ไม่ต้องพิมพ์คำสั่ง</p>
-  <form class="card form" id="addForm" autocomplete="off">
+  <h1 class="hello" style="font-size:26px">บันทึกข้อมูล</h1>
+  <div class="seg" role="group" aria-label="เลือกสิ่งที่จะบันทึก"><button type="button" data-tab="price" aria-pressed="true">ราคา</button><button type="button" data-tab="ing" aria-pressed="false">วัตถุดิบใหม่</button><button type="button" data-tab="rec" aria-pressed="false">สูตรใหม่</button></div>
+
+  <form class="card form" id="addForm" autocomplete="off" data-pane="price">
+    <p class="sub" style="margin:0">เจอของถูกหรือราคาเปลี่ยน กรอกตรงนี้ได้เลย</p>
     <div class="field"><label for="fIng">วัตถุดิบ</label><select id="fIng"></select></div>
     <div class="two">
       <div class="field"><label for="fPrice">ราคา (บาท)</label><input id="fPrice" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 25"></div>
@@ -171,8 +174,38 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
     </div>
     <div class="field"><label for="fShop">ซื้อที่ไหน (ไม่ใส่ก็ได้)</label><input id="fShop" type="text" placeholder="เช่น แม็คโคร"></div>
     <div class="tip" id="fPreview"><span aria-hidden="true">🧮</span><div>กรอกราคากับจำนวน แล้วจะคำนวณราคาต่อกรัมให้ดูที่นี่</div></div>
-    <button class="btn" id="fSave" type="submit">บันทึกลงสมุดต้นทุน</button>
+    <button class="btn" id="fSave" type="submit">บันทึกราคา</button>
     <div id="fMsg" role="status"></div>
+  </form>
+
+  <form class="card form" id="ingForm" autocomplete="off" data-pane="ing" hidden>
+    <p class="sub" style="margin:0">เพิ่มวัตถุดิบหรือของที่ใช้ เช่น แป้ง ช็อกโกแลต กล่อง แล้วไปใส่ราคาที่แท็บ "ราคา"</p>
+    <div class="field"><label for="iName">ชื่อ</label><input id="iName" type="text" placeholder="เช่น แป้งสาลี"></div>
+    <div class="field"><label>นับเป็น</label>
+      <div class="seg" role="group" aria-label="หน่วยนับ"><button type="button" data-iunit="g" aria-pressed="true">กรัม</button><button type="button" data-iunit="pc" aria-pressed="false">ชิ้น/ใบ</button></div>
+    </div>
+    <button class="btn" id="iSave" type="submit">เพิ่มวัตถุดิบ</button>
+    <div id="iMsg" role="status"></div>
+  </form>
+
+  <form class="card form" id="recForm" autocomplete="off" data-pane="rec" hidden>
+    <p class="sub" style="margin:0">สร้างสูตรใหม่ เช่น คุกกี้ ระบบคิดต้นทุนให้จากราคาที่บันทึกไว้</p>
+    <div class="field"><label for="rName">ชื่อสูตร</label><input id="rName" type="text" placeholder="เช่น คุกกี้เนยสด"></div>
+    <div class="two">
+      <div class="field"><label for="rBags">ได้กี่ถุง/ชิ้น</label><input id="rBags" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 20"></div>
+      <div class="field"><label for="rBagG">กรัมต่อถุง</label><input id="rBagG" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 60"></div>
+    </div>
+    <div class="field"><label>ส่วนผสมต่อ 1 สูตร (กรัม)</label><div id="rItems" style="display:flex;flex-direction:column;gap:10px"></div><button class="btn ghost" type="button" id="rAddRow" style="font-size:16px;padding:10px 16px">+ เพิ่มส่วนผสม</button></div>
+    <div class="two">
+      <div class="field"><label for="rPack">บรรจุภัณฑ์ต่อถุง (฿)</label><input id="rPack" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 1.14"></div>
+      <div class="field"><label for="rLabor">ค่าแรงต่อถุง (฿)</label><input id="rLabor" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 2"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="rGas">ค่าแก๊ส/ไฟต่อถุง (฿)</label><input id="rGas" type="number" inputmode="decimal" min="0" step="any" placeholder="เช่น 1"></div>
+      <div class="field"><label for="rMargin">กำไรเป้าหมาย (%)</label><input id="rMargin" type="number" inputmode="decimal" min="1" max="90" step="any" value="40"></div>
+    </div>
+    <button class="btn" id="rSave" type="submit">สร้างสูตร</button>
+    <div id="rMsg" role="status"></div>
   </form>
 </main>
 
@@ -186,97 +219,146 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 </div>
 
 <script>
-// ---- ข้อมูลสำรอง (ภาพถ่าย 12 ต.ค. 2569) ใช้เมื่อเชื่อมชีทไม่ได้ ----
-// (ไม่มีข้อมูลลับในไฟล์นี้ นอกจากรหัสบันทึกราคา)
-let D = {
-  ingList:[], nextP:0,
-  name:'คอนเฟคเนย', bags:21, bagG:60, packaging:3, labor:2, gas:1, targetMargin:40,
-  butterLo:272/454, butterHi:285/454, live:false, missing:[],
-  ings:[
-    {n:'คอร์นเฟลกส์', g:500, ppg:0.1364},
-    {n:'เนยก้อน', g:120, butter:true},
-    {n:'นมข้นหวาน', g:170, ppg:0.0789},
-    {n:'น้ำตาล', g:60, ppg:0.025},
-    {n:'ถั่วหิมพานต์', g:100, ppg:0.20},
-    {n:'ลูกเกด', g:200, ppg:0}
-  ],
-  scans:[
-    {item:'คอร์นเฟลกส์', name:'เคลล็อกส์ คอร์นเฟลกส์', w:500, price:65, promo:true},
-    {item:'คอร์นเฟลกส์', name:'เนสท์เล่ คอร์นเฟลกส์', w:500, price:128, promo:true},
-    {item:'เนย', name:'เนยสดรสเค็ม (Salted Butter)', w:225, price:105, promo:true},
-    {item:'เนย', name:'เนยก้อนที่บันทึกไว้ (ราคาต่ำสุด)', w:454, price:272, promo:false}
-  ]
-};
-let butterMode='lo', margin=40;
+const API='https://sasikranforteamlt9.app.n8n.cloud/webhook/', PRICE_KEY='dc-ab5d546cf591';
+// ข้อมูลสำรองเมื่อเชื่อมสมุดไม่ได้
+let D={live:false,nextP:0,butterLo:272/454,butterHi:285/454,ingList:[],missing:[],
+  recipes:[{id:'R01',name:'คอนเฟคเนย',bags:21,bagG:60,packaging:1.14,labor:2,gas:1,margin:40,ings:[
+    {id:'ING01',n:'คอร์นเฟลกส์',g:500,ppg:0.1364},{id:'ING02',n:'เนย',g:120,ppg:0.5991,butter:true},{id:'ING04',n:'นมข้นหวาน',g:170,ppg:0.0789},
+    {id:'ING03',n:'น้ำตาล',g:60,ppg:0.025},{id:'ING05',n:'ถั่วหิมพานต์',g:100,ppg:0.37},{id:'ING06',n:'ลูกเกด',g:200,ppg:0.155}]}],
+  scans:[]};
+let rIdx=0, butterMode='lo', margin=40, unit='g', iunit='g';
 const $=(id)=>document.getElementById(id);
 const baht=(x,d=2)=>'฿'+x.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
 const esc=(t)=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num=(v)=>{const x=parseFloat(String(v==null?'':v).replace(/[,฿%\s]/g,''));return isNaN(x)?0:x;};
+const R=()=>D.recipes[rIdx]||{name:'ยังไม่มีสูตร',ings:[],bags:1,bagG:0,packaging:0,labor:0,gas:0,margin:40};
 
-function calc(mode){
-  const bp = mode==='hi'?D.butterHi:D.butterLo;
-  const rows=D.ings.map(i=>{const ppg=i.butter?bp:i.ppg;return {...i,ppg,cost:i.g*ppg};});
-  const mat=rows.reduce((s,r)=>s+r.cost,0)/D.bags;
-  return {rows, perBag:mat+D.packaging+D.labor+D.gas};
+function calc(rec,mode){
+  const bp=mode==='hi'?D.butterHi:D.butterLo;
+  const rows=rec.ings.map(i=>{const ppg=i.butter&&bp>0?bp:i.ppg;return {...i,ppg,cost:i.g*ppg};});
+  const mat=rows.reduce((s,r)=>s+r.cost,0)/(rec.bags||1);
+  return {rows,perBag:mat+rec.packaging+rec.labor+rec.gas};
 }
 function render(){
-  const lo=calc('lo'), hi=calc('hi'), cur=calc(butterMode), m=margin/100;
-  const pr=Math.ceil(cur.perBag/(1-m)), realM=(pr-cur.perBag)/pr*100;
-  $('recName').textContent=D.name;
-  $('bagLbl').textContent='ต้นทุนต่อถุง ('+D.bagG+' g)';
+  const rec=R(), lo=calc(rec,'lo'), hi=calc(rec,'hi'), cur=calc(rec,butterMode), m=margin/100;
+  const pr=Math.ceil(cur.perBag/(1-m)), realM=pr>0?(pr-cur.perBag)/pr*100:0;
+  $('recName').textContent=rec.name;
+  $('bagLbl').textContent='ต้นทุนต่อถุง ('+rec.bagG+' g)';
   $('costPerBag').textContent=baht(cur.perBag);
-  $('bagsTag').textContent='ได้ '+D.bags+' ถุงต่อสูตร';
-  $('costRange').textContent='ช่วงต้นทุนตามราคาเนย '+baht(Math.min(lo.perBag,hi.perBag))+' – '+baht(Math.max(lo.perBag,hi.perBag));
+  $('bagsTag').textContent='ได้ '+rec.bags+' ถุงต่อสูตร';
+  $('costRange').textContent=D.butterHi>0&&rec.ings.some(i=>i.butter)?'ช่วงต้นทุนตามราคาเนย '+baht(Math.min(lo.perBag,hi.perBag))+' – '+baht(Math.max(lo.perBag,hi.perBag)):'';
   $('priceRound').textContent='฿'+pr;
   $('marginReal').textContent='กำไรที่ได้ ประมาณ '+realM.toFixed(0)+'%';
   $('marginV').textContent=margin+'%';
   $('tipM').textContent=margin+'%';$('tipD').textContent=(1-m).toFixed(2);$('tipX').textContent=(1+m).toFixed(2);
-  $('bLo').textContent='ต่ำสุด ฿'+Math.round(D.butterLo*454);
-  $('bHi').textContent='สูงสุด ฿'+Math.round(D.butterHi*454);
+  const hasB=rec.ings.some(i=>i.butter);
+  $('butterField').hidden=!hasB;
+  $('bLo').textContent='ต่ำสุด ฿'+Math.round(D.butterLo*454);$('bHi').textContent='สูงสุด ฿'+Math.round(D.butterHi*454);
   $('bLo').setAttribute('aria-pressed',butterMode==='lo');$('bHi').setAttribute('aria-pressed',butterMode==='hi');
   const max=Math.max(1,...cur.rows.map(r=>r.cost));
   $('ings').innerHTML=[...cur.rows].sort((a,b)=>b.cost-a.cost).map(r=>
     `<div class="row"><span>${esc(r.n)} ${r.g} g ${r.ppg>0?'':'<span class="tag guess">ยังไม่มีราคา</span>'}</span><b class="num">${baht(r.cost,0)}</b></div><div class="bar"><i style="width:${(r.cost/max*100).toFixed(0)}%"></i></div>`
-  ).join('')+`<div class="note" style="border-top:1px dashed var(--line);padding-top:10px">บวกต่อถุง: บรรจุภัณฑ์ ฿${D.packaging} · ค่าแรง ฿${D.labor} · แก๊ส/ไฟ ฿${D.gas}</div>`;
-  $('home-margin').innerHTML=`<div class="row"><b>${esc(D.name)}</b><b class="num">${realM.toFixed(0)}%</b></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,realM)).toFixed(0)}%"></i></div><div class="note">ราคาขายแนะนำ ฿${pr} ต้นทุน ${baht(cur.perBag)} ต่อถุง</div>`;
-  const nm=D.ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n);
-  $('costNote').textContent=(D.live?'ตัวเลขทั้งหมดอ่านสดจากสมุดต้นทุน':'ข้อมูลสำรอง (ยังไม่ได้เชื่อมชีท)')+(nm.length?' · ยังไม่มีราคา: '+nm.join(', ')+' จึงนับเป็น ฿0 ต้นทุนจริงจะสูงกว่านี้':'')+' · ค่าแรง ค่าแก๊ส บรรจุภัณฑ์ยังเป็นค่าสมมติ';
+  ).join('')+`<div class="note" style="border-top:1px dashed var(--line);padding-top:10px">บวกต่อถุง: บรรจุภัณฑ์ ฿${rec.packaging.toFixed(2)} · ค่าแรง ฿${rec.labor} · แก๊ส/ไฟ ฿${rec.gas}</div>`;
+  $('home-margin').innerHTML=D.recipes.map(x=>{const c=calc(x,butterMode),p=Math.ceil(c.perBag/(1-x.margin/100)),mm=p>0?(p-c.perBag)/p*100:0;
+    return `<div class="row"><b>${esc(x.name)}</b><b class="num">${mm.toFixed(0)}%</b></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,mm)).toFixed(0)}%"></i></div><div class="note">ราคาขายแนะนำ ฿${p} ต้นทุน ${baht(c.perBag)} ต่อถุง</div>`;}).join('<div style="height:8px"></div>');
+  const nm=[...new Set(rec.ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n))];
+  $('costNote').textContent=(D.live?'ตัวเลขอ่านสดจากสมุดต้นทุน':'ข้อมูลสำรอง (ยังไม่ได้เชื่อมสมุด)')+(nm.length?' · ยังไม่มีราคา: '+nm.join(', ')+' จึงนับเป็น ฿0 ต้นทุนจริงจะสูงกว่านี้':'');
+  $('recWrap').hidden=D.recipes.length<2;
+  $('recSel').innerHTML=D.recipes.map((x,i)=>`<option value="${i}"${i===rIdx?' selected':''}>${esc(x.name)}</option>`).join('');
 }
 function bestOf(it){return D.scans.filter(s=>s.item===it).map(s=>({...s,p100:s.price/s.w*100})).sort((a,b)=>a.p100-b.p100);}
 function renderScans(){
   const items=[...new Set(D.scans.map(s=>s.item))];
   $('scanGroups').innerHTML=items.map(it=>`<div class="card"><h3 style="font-size:18px;margin-bottom:6px">${esc(it)}</h3><div class="cmp">`+bestOf(it).map((r,i)=>
     `<div class="r"><div class="l"><b>${esc(r.name)}</b><span class="note">${r.w} g · ${baht(r.price,0)}${r.promo?' (โปร)':''}</span></div><div style="text-align:right">${i===0?'<span class="tag best">ถูกสุด</span><br>':''}<b class="num">${baht(r.p100,1)}</b><div class="note">ต่อ 100 g</div></div></div>`).join('')+`</div></div>`).join('')||'<div class="card note">ยังไม่มีป้ายที่สแกน ถ่ายป้ายส่งเข้า LINE ได้เลย</div>';
-  const last=D.scans[D.scans.length-1];
-  const lc=D.scans.filter(s=>s.promo).slice(-1)[0]||last;
+  const lc=D.scans.filter(s=>s.promo).slice(-1)[0]||D.scans[D.scans.length-1];
   if(lc) document.querySelector('.label-card').innerHTML=`<small>${esc(lc.name)}</small><small style="display:block">${lc.w} g${lc.promo?' · โปรโมชัน':''}</small><strong class="num">฿${lc.price}</strong>`;
 }
 function renderList(){
   const items=[...new Set(D.scans.map(s=>s.item))];
   $('shop').innerHTML=items.map((it,k)=>{const b=bestOf(it)[0];
     return `<label class="chk"><input type="checkbox" id="c${k}"><span class="t"><b>${esc(it)}</b> · ${esc(b.name)}<br><span class="note">${baht(b.price,0)} / ${b.w} g = ${baht(b.p100,1)} ต่อ 100 g${b.promo?' (โปร)':''}</span></span></label>`;}).join('')||'<div class="note">ยังไม่มีป้ายที่สแกน</div>';
-  const miss=[...new Set([...D.ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n),...D.missing])];
+  const miss=[...new Set([...R().ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n),...D.missing])];
   $('missing').innerHTML=miss.map(n=>`<div class="row"><span>${esc(n)}</span><span class="tag guess">ถ่ายป้ายส่งมา</span></div>`).join('')||'<div class="note">ทุกอย่างมีราคาแล้ว</div>';
 }
 function all(){render();renderScans();renderList();}
 
-// ---- อ่านข้อมูลจากสมุดต้นทุนผ่าน n8n ----
-const API='https://sasikranforteamlt9.app.n8n.cloud/webhook/', PRICE_KEY='dc-ab5d546cf591';
-async function loadSheet(){
+async function loadSheet(keepId){
   const st=$('status'); st.textContent='กำลังอ่านสมุดต้นทุน…';
   try{
     const r=await fetch(API+'dreamcrumb-data',{cache:'no-store'});
     if(!r.ok) throw new Error('http '+r.status);
-    const j=await r.json();
-    if(!j||!j.ok) throw new Error('bad data');
-    D={...j,live:true}; fillIngs(); margin=Math.round(j.margin)||40; $('margin').value=margin;
+    const j=await r.json(); if(!j||!j.ok||!j.recipes) throw new Error('bad data');
+    const cur=keepId||(D.recipes[rIdx]||{}).id;
+    D={...j,live:true};
+    rIdx=Math.max(0,D.recipes.findIndex(x=>x.id===cur));
+    margin=Math.round(R().margin)||40; $('margin').value=margin;
+    fillIngs();
     st.textContent='อ่านจากสมุดต้นทุนล่าสุดเมื่อ '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
-  }catch(e){
-    D.live=false; st.textContent='เชื่อมสมุดไม่ได้ในตอนนี้ (ตรวจว่า workflow ใน n8n ยัง Publish อยู่) · แสดงข้อมูลสำรอง';
-  }
+  }catch(e){ D.live=false; st.textContent='เชื่อมสมุดไม่ได้ในตอนนี้ (ตรวจว่า workflow ใน n8n ยัง Publish อยู่) · แสดงข้อมูลสำรอง'; }
   all();
 }
-// tabs
+async function post(path,body){
+  const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PRICE_KEY,...body})});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||'ไม่สำเร็จ'); return j;
+}
+const say=(id,ok,t)=>{const m=$(id);m.className=ok?'okmsg':'errmsg';m.textContent=t;};
+function fillIngs(){
+  const opts='<option value="">เลือกวัตถุดิบ…</option>'+(D.ingList||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
+  const sel=$('fIng'),cur=sel.value; sel.innerHTML=opts; if(cur) sel.value=cur;
+  document.querySelectorAll('#rItems select').forEach(s=>{const c=s.value;s.innerHTML=opts;s.value=c;});
+}
+// ---- ราคา ----
+function formCalc(){const price=num($('fPrice').value);let qty=num($('fQty').value);if(unit==='kg')qty*=1000;return {price,qty,ppg:(price>0&&qty>0)?price/qty:0};}
+function formPreview(){const c=formCalc(),el=$('fPreview').lastElementChild;
+  el.textContent=c.ppg>0?`ราคาต่อ${unit==='pc'?'ชิ้น':'กรัม'} ${baht(c.ppg,4)}${unit==='pc'?'':' · ต่อ 100 g '+baht(c.ppg*100,2)}`:'กรอกราคากับจำนวน แล้วจะคำนวณราคาต่อกรัมให้ดูที่นี่';}
+async function savePrice(e){
+  e.preventDefault(); const id=$('fIng').value,c=formCalc();
+  if(!id) return say('fMsg',false,'เลือกวัตถุดิบก่อนนะคะ');
+  if(!(c.ppg>0)) return say('fMsg',false,'ใส่ราคากับจำนวนที่มากกว่า 0 ค่ะ');
+  if(!D.live) return say('fMsg',false,'ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
+  const btn=$('fSave');btn.disabled=true;
+  try{
+    await post('dreamcrumb-price',{ingredient_id:id,price:c.price,qty:num($('fQty').value),unit:unit==='kg'?'kg':'g',shop:$('fShop').value.trim()});
+    const nm=(D.ingList.find(i=>i.id===id)||{}).name||id;
+    $('fPrice').value='';$('fQty').value='';$('fShop').value='';formPreview();
+    await loadSheet(); say('fMsg',true,'บันทึกแล้ว: '+nm+' '+baht(c.ppg,4)+' ต่อ'+(unit==='pc'?'ชิ้น':'กรัม')+' · ต้นทุนอัปเดตแล้ว');
+  }catch(x){say('fMsg',false,'บันทึกไม่สำเร็จ: '+(x.message||'ลองใหม่')+' · ตรวจแท็บ Prices ก่อนกดซ้ำนะคะ');}
+  btn.disabled=false;
+}
+// ---- วัตถุดิบใหม่ ----
+async function saveIng(e){
+  e.preventDefault(); const name=$('iName').value.trim();
+  if(!name) return say('iMsg',false,'ใส่ชื่อวัตถุดิบก่อนนะคะ');
+  if(!D.live) return say('iMsg',false,'ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
+  const btn=$('iSave');btn.disabled=true;
+  try{ await post('dreamcrumb-ingredient',{name,unit:iunit}); $('iName').value=''; await loadSheet(); say('iMsg',true,'เพิ่มแล้ว: '+name+' · ไปแท็บ "ราคา" เพื่อใส่ราคาต่อได้เลย'); }
+  catch(x){say('iMsg',false,'เพิ่มไม่สำเร็จ: '+(x.message||'ลองใหม่'));}
+  btn.disabled=false;
+}
+// ---- สูตรใหม่ ----
+function addRow(){
+  const d=document.createElement('div'); d.className='two'; d.style.gridTemplateColumns='1fr 96px 44px'; d.style.alignItems='center';
+  d.innerHTML='<select aria-label="วัตถุดิบ" style="font:inherit;font-size:16px;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);min-height:48px;width:100%"></select><input type="number" inputmode="decimal" min="0" step="any" placeholder="กรัม" aria-label="กรัม" style="font:inherit;font-size:16px;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);min-height:48px;width:100%"><button type="button" aria-label="ลบแถว" class="btn ghost" style="padding:8px;font-size:18px">×</button>';
+  $('rItems').appendChild(d); fillIngs();
+}
+async function saveRec(e){
+  e.preventDefault();
+  const items=[...document.querySelectorAll('#rItems .two')].map(r=>({ingredient_id:r.querySelector('select').value,qty:num(r.querySelector('input').value)})).filter(x=>x.ingredient_id&&x.qty>0);
+  const name=$('rName').value.trim();
+  if(!name) return say('rMsg',false,'ใส่ชื่อสูตรก่อนนะคะ');
+  if(!(num($('rBags').value)>0)||!(num($('rBagG').value)>0)) return say('rMsg',false,'ใส่จำนวนถุงและกรัมต่อถุงด้วยค่ะ');
+  if(!items.length) return say('rMsg',false,'เพิ่มส่วนผสมอย่างน้อย 1 อย่างค่ะ');
+  if(!D.live) return say('rMsg',false,'ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
+  const btn=$('rSave');btn.disabled=true;
+  try{
+    const j=await post('dreamcrumb-recipe',{name,bags:num($('rBags').value),bagG:num($('rBagG').value),packaging:num($('rPack').value),labor:num($('rLabor').value),gas:num($('rGas').value),margin:num($('rMargin').value)||40,items});
+    ['rName','rBags','rBagG','rPack','rLabor','rGas'].forEach(i=>$(i).value='');$('rItems').innerHTML='';addRow();
+    await loadSheet(j.id); say('rMsg',true,'สร้างสูตร "'+name+'" แล้ว · ดูที่แท็บ "ต้นทุน" ถ้าวัตถุดิบไหนยังไม่มีราคา ไปใส่ที่แท็บ "ราคา"');
+  }catch(x){say('rMsg',false,'สร้างไม่สำเร็จ: '+(x.message||'ลองใหม่'));}
+  btn.disabled=false;
+}
+// ---- เมนู ----
 const screens=['home','cost','scan','add','list'];
 function go(t){
   screens.forEach(s=>{$('s-'+s).hidden=s!==t;});
@@ -285,50 +367,19 @@ function go(t){
 }
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]'); if(g){go(g.dataset.go);return;}
-  const b=e.target.closest('[data-butter]'); if(b){butterMode=b.dataset.butter;render();return;}
-  if(e.target.closest('#refresh')) loadSheet();
+  const bt=e.target.closest('[data-butter]'); if(bt){butterMode=bt.dataset.butter;render();return;}
+  const u=e.target.closest('[data-unit]'); if(u){unit=u.dataset.unit;document.querySelectorAll('[data-unit]').forEach(x=>x.setAttribute('aria-pressed',x===u));formPreview();return;}
+  const iu=e.target.closest('[data-iunit]'); if(iu){iunit=iu.dataset.iunit;document.querySelectorAll('[data-iunit]').forEach(x=>x.setAttribute('aria-pressed',x===iu));return;}
+  const tb=e.target.closest('[data-tab]'); if(tb){document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x===tb));document.querySelectorAll('[data-pane]').forEach(f=>{f.hidden=f.dataset.pane!==tb.dataset.tab;});return;}
+  if(e.target.closest('#refresh')){loadSheet();return;}
+  if(e.target.closest('#rAddRow')){addRow();return;}
+  const rm=e.target.closest('#rItems .btn'); if(rm){const rows=document.querySelectorAll('#rItems .two');if(rows.length>1)rm.parentElement.remove();}
 });
 $('margin').addEventListener('input',e=>{margin=+e.target.value;render();});
-
-// ---- ฟอร์มบันทึกราคา ----
-let unit='g';
-function fillIngs(){
-  const sel=$('fIng'), cur=sel.value;
-  sel.innerHTML='<option value="">เลือกวัตถุดิบ…</option>'+(D.ingList||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
-  if(cur) sel.value=cur;
-}
-function formCalc(){
-  const price=num($('fPrice').value); let qty=num($('fQty').value);
-  if(unit==='kg') qty*=1000;
-  return {price,qty,ppg:(price>0&&qty>0)?price/qty:0};
-}
-function formPreview(){
-  const c=formCalc(), el=$('fPreview').lastElementChild;
-  el.textContent=c.ppg>0?`ราคาต่อ${unit==='pc'?'ชิ้น':'กรัม'} ${baht(c.ppg,4)}${unit==='pc'?'':' · ต่อ 100 g '+baht(c.ppg*100,2)}`:'กรอกราคากับจำนวน แล้วจะคำนวณราคาต่อกรัมให้ดูที่นี่';
-}
-async function saveForm(e){
-  e.preventDefault();
-  const msg=$('fMsg'), id=$('fIng').value, c=formCalc();
-  const bad=(t)=>{msg.className='errmsg';msg.textContent=t;};
-  if(!id) return bad('เลือกวัตถุดิบก่อนนะคะ');
-  if(!(c.ppg>0)) return bad('ใส่ราคากับจำนวนที่มากกว่า 0 ค่ะ');
-  if(!D.live) return bad('ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
-  const btn=$('fSave'); btn.disabled=true; msg.className=''; msg.textContent='';
-  try{
-    const r=await fetch(API+'dreamcrumb-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PRICE_KEY,ingredient_id:id,price:c.price,qty:num($('fQty').value),unit:unit==='kg'?'kg':'g',shop:$('fShop').value.trim()})});
-    const j=await r.json();
-    if(!j.ok) throw new Error(j.error||'ไม่สำเร็จ');
-    const nm=(D.ingList.find(i=>i.id===id)||{}).name||id;
-    $('fPrice').value='';$('fQty').value='';$('fShop').value='';formPreview();
-    await loadSheet();
-    msg.className='okmsg'; msg.textContent='บันทึกแล้ว: '+nm+' '+baht(c.ppg,4)+' ต่อ'+(unit==='pc'?'ชิ้น':'กรัม')+' · ต้นทุนอัปเดตแล้ว';
-  }catch(x){ bad('บันทึกไม่สำเร็จ: '+(x&&x.message||'ลองใหม่อีกครั้ง')+' · ตรวจแท็บ Prices ก่อนกดซ้ำนะคะ'); }
-  btn.disabled=false;
-}
-$('addForm').addEventListener('submit',saveForm);
-$('addForm').addEventListener('input',formPreview);
-document.addEventListener('click',e=>{const u=e.target.closest('[data-unit]');if(u){unit=u.dataset.unit;document.querySelectorAll('[data-unit]').forEach(x=>x.setAttribute('aria-pressed',x===u));formPreview();}});
-all(); loadSheet();
+$('recSel').addEventListener('change',e=>{rIdx=+e.target.value;margin=Math.round(R().margin)||40;$('margin').value=margin;all();});
+$('addForm').addEventListener('submit',savePrice);$('addForm').addEventListener('input',formPreview);
+$('ingForm').addEventListener('submit',saveIng);$('recForm').addEventListener('submit',saveRec);
+addRow(); all(); loadSheet();
 </script>
 
 </body></html>
