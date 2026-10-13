@@ -160,7 +160,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 <!-- ===== บันทึก ===== -->
 <main class="screen" id="s-add" hidden>
   <h1 class="hello" style="font-size:26px">บันทึกข้อมูล</h1>
-  <div class="seg" role="group" aria-label="เลือกสิ่งที่จะบันทึก"><button type="button" data-tab="price" aria-pressed="true">ราคา</button><button type="button" data-tab="ing" aria-pressed="false">วัตถุดิบใหม่</button><button type="button" data-tab="rec" aria-pressed="false">สูตรใหม่</button></div>
+  <div class="seg" role="group" aria-label="เลือกสิ่งที่จะบันทึก"><button type="button" data-tab="price" aria-pressed="true">ราคา</button><button type="button" data-tab="rcp" aria-pressed="false">📷 ใบเสร็จ</button><button type="button" data-tab="ing" aria-pressed="false">วัตถุดิบ</button><button type="button" data-tab="rec" aria-pressed="false">สูตรใหม่</button></div>
 
   <form class="card form" id="addForm" autocomplete="off" data-pane="price">
     <p class="sub" style="margin:0">เจอของถูกหรือราคาเปลี่ยน กรอกตรงนี้ได้เลย</p>
@@ -177,6 +177,18 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
     <button class="btn" id="fSave" type="submit">บันทึกราคา</button>
     <div id="fMsg" role="status"></div>
   </form>
+
+  <div class="card form" id="rcpPane" data-pane="rcp" hidden>
+    <p class="sub" style="margin:0">ถ่ายหรือเลือกรูปใบเสร็จ ระบบอ่านรายการกับราคาให้ แล้วเธอตรวจก่อนกดบันทึก (AI อ่านพลาดได้ จึงต้องเช็กทุกบรรทัด)</p>
+    <div class="two"><button class="btn" type="button" id="rcpCam">📷 ถ่ายรูป</button><button class="btn ghost" type="button" id="rcpPick">🖼️ เลือกรูป</button></div>
+    <input id="rcpFileCam" type="file" accept="image/*" capture="environment" hidden>
+    <input id="rcpFile" type="file" accept="image/*" hidden>
+    <img id="rcpImg" alt="รูปใบเสร็จ" hidden style="max-width:100%;max-height:220px;object-fit:contain;border-radius:14px;align-self:center">
+    <div id="rcpMsg" role="status"></div>
+    <div id="rcpList" style="display:flex;flex-direction:column;gap:12px"></div>
+    <button class="btn" type="button" id="rcpSave" hidden>บันทึกราคาที่เลือก</button>
+    <div id="rcpRes" role="status"></div>
+  </div>
 
   <form class="card form" id="ingForm" autocomplete="off" data-pane="ing" hidden>
     <p class="sub" style="margin:0">เพิ่มวัตถุดิบหรือของที่ใช้ เช่น แป้ง ช็อกโกแลต กล่อง แล้วไปใส่ราคาที่แท็บ "ราคา"</p>
@@ -427,6 +439,67 @@ async function saveRec(e){
   }catch(x){say('rMsg',false,'ยังไม่สำเร็จ: '+(x.message||'ลองใหม่')+(done.length?' · เพิ่มวัตถุดิบไปแล้ว: '+done.join(', ')+' กดสร้างสูตรอีกครั้งได้เลย ระบบจะไม่สร้างซ้ำ':' · กดสร้างสูตรอีกครั้งได้เลย'));}
   btn.disabled=false;
 }
+
+// ---- ใบเสร็จ (OCR) ----
+let lastRcp={shop:''};
+function toJpegB64(file){return new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{const m=1600,k=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.85));};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่นหรือถ่ายใหม่'));};img.src=url;});}
+function looseIng(t){const n=normName(t);if(!n)return null;const ex=findIng(t);if(ex)return ex;
+  const c=(D.ingList||[]).filter(i=>{const x=normName(i.name);return x&&(n.includes(x)||x.includes(n));}).sort((a,b)=>b.name.length-a.name.length);return c[0]||null;}
+const rcpUnitOpts=(kind)=>kind==='pc'?unitOpts('pc'):(kind==='g'?unitOpts('g'):'<option value="g">กรัม</option><option value="kg">กก.</option><option value="pc">ชิ้น/ใบ/ฟอง</option>');
+function rcpRefresh(r){const nm=r.querySelector('.rr-name').value,m=looseIng(nm),b=r.querySelector('.rbadge'),u=r.querySelector('.rr-unit');
+  const kind=m?m.unit:'any',cur=u.value;const sig=kind;if(u.dataset.kind!==sig){u.innerHTML=rcpUnitOpts(kind==='any'?'any':kind);u.dataset.kind=sig;if([...u.options].some(o=>o.value===cur))u.value=cur;}
+  b.textContent=!normName(nm)?'':(m?'✓ ตรงกับ "'+m.name+'" ในสมุด':'ใหม่ ไม่มีในสมุด จะเพิ่มให้');r.style.outline='';}
+function renderRcp(j){
+  lastRcp={shop:j.shop||''};
+  $('rcpList').innerHTML=(j.items||[]).map((it,k)=>{const m=looseIng(it.name),kind=m?m.unit:'any';
+    let q='';if(it.pack_weight_g&&kind!=='pc')q=String(Math.round(it.quantity*it.pack_weight_g*100)/100);else if(kind==='pc')q=String(it.quantity);
+    return `<div class="rr" data-k="${k}" style="display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;border:1px solid var(--line)">
+      <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" class="rr-on" checked style="width:22px;height:22px"><b>บรรทัดที่ ${k+1}</b><span class="note" style="margin-left:auto">${esc(it.quantity)} ชิ้น/แพ็ค</span></label>
+      <input class="rr-name" list="ingDL" type="text" value="${esc(m?m.name:String(it.name).replace(/\s*[0-9][0-9.,]*\s*(kg|g|กก\.?|กรัม|กิโลกรัม|ml|l|ลิตร|มล\.?)\b.*$/i,'').trim()||it.name)}" aria-label="ชื่อวัตถุดิบ" style="${IS}">
+      <div class="rbadge note"></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div><span style="${LB}">ราคารวมบรรทัดนี้ (บาท)</span><input class="rr-price" type="text" inputmode="decimal" value="${esc(it.total_price)}" style="${IS}"></div>
+        <div><span style="${LB}">ได้ของมาเท่าไร</span><div class="two" style="grid-template-columns:1fr 120px"><input class="rr-qty" type="text" inputmode="decimal" value="${esc(q)}" placeholder="เช่น 1000" style="${IS}"><select class="rr-unit" style="${IS}" data-kind=""></select></div></div></div>
+      ${q?'':'<div class="note" style="color:#B45309">ใบเสร็จไม่บอกน้ำหนัก ใส่จำนวนที่ได้เอง (เช่น กี่กรัม กี่ชิ้น)</div>'}
+    </div>`;}).join('');
+  document.querySelectorAll('#rcpList .rr').forEach(r=>{const m=looseIng(r.querySelector('.rr-name').value);rcpRefresh(r);});
+  $('rcpSave').hidden=false;
+  say('rcpMsg',true,'อ่านได้ '+(j.items||[]).length+' รายการ'+(j.shop?' จาก '+j.shop:'')+' · ตรวจชื่อ ราคา และจำนวนทีละบรรทัด เอาติ๊กออกถ้าไม่ต้องการบันทึก');
+}
+async function readReceipt(file){
+  if(!file) return;
+  $('rcpList').innerHTML='';$('rcpSave').hidden=true;$('rcpRes').textContent='';$('rcpRes').className='';
+  say('rcpMsg',true,'กำลังอ่านใบเสร็จ… รอประมาณ 10-40 วินาทีนะคะ');
+  try{const d=await toJpegB64(file);$('rcpImg').src=d;$('rcpImg').hidden=false;
+    const j=await post('dreamcrumb-receipt',{image:d.split(',')[1],mime:'image/jpeg'});renderRcp(j);}
+  catch(x){say('rcpMsg',false,(x.message||'อ่านไม่สำเร็จ')+' · ลองถ่ายใหม่ได้เลยค่ะ');}
+}
+async function saveRcp(){
+  const btn=$('rcpSave');if(btn.disabled)return;
+  const rows=[...document.querySelectorAll('#rcpList .rr')].filter(r=>r.querySelector('.rr-on').checked&&!r.dataset.done);
+  const errs=[];document.querySelectorAll('#rcpList .rr').forEach(r=>r.style.outline='');
+  if(!rows.length) return say('rcpRes',false,'ไม่มีรายการที่ติ๊กไว้ค่ะ');
+  if(!D.live) return say('rcpRes',false,'ยังไม่ได้เชื่อมสมุด กดรีเฟรชที่หน้าแรกก่อนนะคะ');
+  rows.forEach(r=>{const k=+r.dataset.k+1,nm=r.querySelector('.rr-name').value.trim(),pr=num(r.querySelector('.rr-price').value),q=num(r.querySelector('.rr-qty').value);
+    if(!nm)return bad(r,'บรรทัดที่ '+k+' ยังไม่มีชื่อ',errs);
+    if(!(pr>0))return bad(r,'บรรทัดที่ '+k+' ราคาต้องมากกว่า 0',errs);
+    if(!(q>0))return bad(r,'บรรทัดที่ '+k+' ("'+nm+'") ยังไม่ได้ใส่จำนวนที่ได้มา',errs);});
+  if(errs.length){const f=errs[0];say('rcpRes',false,f.msg+(errs.length>1?' (และอีก '+(errs.length-1)+' จุด)':''));f.w.scrollIntoView({block:'center',behavior:'smooth'});return;}
+  btn.disabled=true;let n=0;const made=[];
+  try{
+    for(const r of rows){
+      const nm=r.querySelector('.rr-name').value.trim(),u=r.querySelector('.rr-unit').value;
+      const m=looseIng(nm);let id=m?m.id:r.dataset.created;
+      if(!id){id=(await post('dreamcrumb-ingredient',{name:nm,unit:u==='pc'?'pc':'g'})).id;r.dataset.created=id;D.ingList.push({id,name:nm,unit:u==='pc'?'pc':'g'});made.push(nm);}
+      await post('dreamcrumb-price',{ingredient_id:id,price:num(r.querySelector('.rr-price').value),qty:toBase(r.querySelector('.rr-qty').value,u),unit:'g',shop:lastRcp.shop||'ใบเสร็จ'});
+      r.dataset.done='1';r.style.opacity='.55';r.querySelectorAll('input,select').forEach(e=>e.disabled=true);r.querySelector('.rbadge').textContent='✓ บันทึกแล้ว';n++;
+    }
+    await loadSheet();say('rcpRes',true,'บันทึกราคาแล้ว '+n+' รายการ'+(made.length?' · เพิ่มวัตถุดิบใหม่: '+made.join(', '):'')+' · ต้นทุนอัปเดตแล้ว');
+  }catch(x){say('rcpRes',false,'ยังไม่สำเร็จ: '+(x.message||'ลองใหม่')+(n?' · บันทึกไปแล้ว '+n+' รายการ กดบันทึกอีกครั้งจะทำต่อเฉพาะที่เหลือ ไม่ซ้ำ':''));}
+  btn.disabled=false;
+}
 // ---- เมนู ----
 const screens=['home','cost','scan','add','list'];
 function go(t){
@@ -455,6 +528,10 @@ document.addEventListener('change',e=>{
 $('margin').addEventListener('input',e=>{margin=+e.target.value;render();});
 $('recSel').addEventListener('change',e=>{rIdx=+e.target.value;margin=Math.round(R().margin)||40;$('margin').value=margin;all();});
 $('addForm').addEventListener('submit',savePrice);$('addForm').addEventListener('input',formPreview);
+$('rcpCam').onclick=()=>$('rcpFileCam').click();$('rcpPick').onclick=()=>$('rcpFile').click();
+$('rcpFileCam').onchange=e=>{readReceipt(e.target.files[0]);e.target.value='';};$('rcpFile').onchange=e=>{readReceipt(e.target.files[0]);e.target.value='';};
+$('rcpSave').onclick=saveRcp;
+document.addEventListener('input',e=>{const r=e.target.closest('.rr');if(r&&e.target.closest('.rr-name'))rcpRefresh(r);});
 $('ingForm').addEventListener('submit',saveIng);$('recForm').addEventListener('submit',saveRec);
 addRow(); all(); loadSheet();
 {const h=(location.hash||'').slice(1); if(screens.includes(h)) go(h);}
