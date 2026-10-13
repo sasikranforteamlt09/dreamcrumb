@@ -457,6 +457,8 @@ $('recSel').addEventListener('change',e=>{rIdx=+e.target.value;margin=Math.round
 $('addForm').addEventListener('submit',savePrice);$('addForm').addEventListener('input',formPreview);
 $('ingForm').addEventListener('submit',saveIng);$('recForm').addEventListener('submit',saveRec);
 addRow(); all(); loadSheet();
+{const h=(location.hash||'').slice(1); if(screens.includes(h)) go(h);}
+window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1); if(screens.includes(h)) go(h);});
 </script>
 
 </body></html>
