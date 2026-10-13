@@ -74,9 +74,9 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .chk .t{min-width:0}
 .chk input:checked + .t{opacity:.5;text-decoration:line-through}
 .seg button{white-space:nowrap}
-.bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
-.bar button{width:44px;height:44px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
-.bar b{font-family:var(--f-display);font-size:18px;color:var(--ink)}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.topbar button{width:44px;height:44px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.topbar b{font-family:var(--f-display);font-size:18px;color:var(--ink)}
 .dim{position:fixed;inset:0;z-index:40;background:rgba(10,20,35,.5)}
 .drawer{position:fixed;top:0;bottom:0;left:0;width:min(300px,82vw);z-index:41;background:var(--card);padding:20px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:4px 0 24px rgba(0,0,0,.25);overflow:auto}
 .drawer .brand{margin:4px 8px 12px}
@@ -100,11 +100,12 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .okmsg{background:var(--good);color:var(--accent-ink);border-radius:18px;padding:14px 16px;font-weight:600}
 .errmsg{background:var(--pink);color:var(--ink);border-radius:18px;padding:14px 16px}
 .btn:disabled{opacity:.5}
+html{scroll-padding-top:72px}
 </style>
 
 </head><body>
 <div class="shell">
-<header class="bar"><button type="button" id="menuBtn" aria-label="เปิดเมนู">☰</button><b id="barTitle">Dreamcrumb</b></header>
+<header class="topbar"><button type="button" id="menuBtn" aria-label="เปิดเมนู">☰</button><b id="barTitle">Dreamcrumb</b></header>
 
 <!-- ===== หน้าแรก ===== -->
 <main class="screen" id="s-home">
@@ -260,7 +261,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 </nav>
 </div>
 <div class="dim" id="dim" hidden></div>
-<aside class="drawer" id="drawer" hidden aria-label="เมนูทั้งหมด"><div class="brand">Dreamcrumb</div><button type="button" data-go="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>หน้าแรก</button><button type="button" data-go="cost"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01"/></svg>ดูต้นทุนสูตร</button><button type="button" data-go="plan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3H9zM6 5h12v16H6z"/><path d="M9 11h6M9 15h4"/></svg>วางแผนผลิต</button><button type="button" data-go="add"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>บันทึกข้อมูล</button><button type="button" data-go="scan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>เทียบราคาป้าย</button><button type="button" data-go="list"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>รายการซื้อของ</button><div class="sep"></div><button type="button" id="drClose">✕ ปิดเมนู</button></aside>
+<aside class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-label="เมนูทั้งหมด"><div class="brand">Dreamcrumb</div><button type="button" data-go="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>หน้าแรก</button><button type="button" data-go="cost"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01"/></svg>ดูต้นทุนสูตร</button><button type="button" data-go="plan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3H9zM6 5h12v16H6z"/><path d="M9 11h6M9 15h4"/></svg>วางแผนผลิต</button><button type="button" data-go="add"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>บันทึกข้อมูล</button><button type="button" data-go="scan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>เทียบราคาป้าย</button><button type="button" data-go="list"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>รายการซื้อของ</button><div class="sep"></div><button type="button" id="drClose">✕ ปิดเมนู</button></aside>
 
 
 <script>
@@ -358,8 +359,10 @@ async function loadSheet(keepId){
   all();
 }
 async function post(path,body){
-  let r; try{ r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PRICE_KEY,...body})}); }
-  catch(e){ throw new Error('เชื่อมสมุดไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); }
+  let r; const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),100000);
+  try{ r=await fetch(API+path,{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PRICE_KEY,...body})}); }
+  catch(e){ clearTimeout(tm); throw new Error(e&&e.name==='AbortError'?'ใช้เวลานานเกินไป ลองใหม่อีกครั้ง':'เชื่อมสมุดไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); }
+  clearTimeout(tm);
   let j; try{ j=await r.json(); }catch(e){ throw new Error('ระบบหลังบ้านตอบผิดปกติ (รหัส '+r.status+') ลองใหม่อีกครั้ง'); }
   if(!j.ok) throw new Error(j.error||'ไม่สำเร็จ'); return j;
 }
@@ -486,8 +489,8 @@ async function saveRec(e){
 // ---- ใบเสร็จ (OCR) ----
 let lastRcp={shop:''};
 function toJpegB64(file){return new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);
-  img.onload=()=>{const m=1600,k=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.85));};
+  img.onload=()=>{const m=2600,k=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);let q=0.85,d=c.toDataURL('image/jpeg',q);while(d.length>2800000&&q>0.4){q-=0.1;d=c.toDataURL('image/jpeg',q);}res(d);};
   img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่นหรือถ่ายใหม่'));};img.src=url;});}
 function looseIng(t){const n=normName(t);if(!n)return null;const ex=findIng(t);if(ex)return ex;
   const c=(D.ingList||[]).filter(i=>{const x=normName(i.name);return x&&(n.includes(x)||x.includes(n));}).sort((a,b)=>b.name.length-a.name.length);return c[0]||null;}
@@ -512,12 +515,13 @@ function renderRcp(j){
   say('rcpMsg',true,'อ่านได้ '+(j.items||[]).length+' รายการ'+(j.shop?' จาก '+j.shop:'')+' · ตรวจชื่อ ราคา และจำนวนทีละบรรทัด เอาติ๊กออกถ้าไม่ต้องการบันทึก');
 }
 async function readReceipt(file){
-  if(!file) return;
+  if(!file) return; if(window.__rcpBusy) return; window.__rcpBusy=true;['rcpCam','rcpPick'].forEach(i=>$(i).disabled=true);
   $('rcpList').innerHTML='';$('rcpSave').hidden=true;$('rcpRes').textContent='';$('rcpRes').className='';
   say('rcpMsg',true,'กำลังอ่านใบเสร็จ… รอประมาณ 10-40 วินาทีนะคะ');
   try{const d=await toJpegB64(file);$('rcpImg').src=d;$('rcpImg').hidden=false;
     const j=await post('dreamcrumb-receipt',{image:d.split(',')[1],mime:'image/jpeg'});renderRcp(j);}
   catch(x){say('rcpMsg',false,(x.message||'อ่านไม่สำเร็จ')+' · ลองถ่ายใหม่ได้เลยค่ะ');}
+  window.__rcpBusy=false;['rcpCam','rcpPick'].forEach(i=>$(i).disabled=false);
 }
 async function saveRcp(){
   const btn=$('rcpSave');if(btn.disabled)return;
@@ -594,16 +598,16 @@ document.addEventListener('input',e=>{if(e.target.closest('.p-st')||e.target.id=
 // ---- เมนู ----
 const screens=['home','cost','scan','add','list','plan'];
 const TITLES={home:'Dreamcrumb',cost:'ต้นทุนสูตร',plan:'วางแผนผลิต',add:'บันทึกข้อมูล',scan:'เทียบราคาป้าย',list:'รายการซื้อของ'};
-function closeMenu(){$('drawer').hidden=true;$('dim').hidden=true;}
-function go(t){
-  closeMenu();$('barTitle').textContent=TITLES[t]||'Dreamcrumb';
+function closeMenu(){const was=!$('drawer').hidden;$('drawer').hidden=true;$('dim').hidden=true;$('menuBtn').setAttribute('aria-expanded','false');if(was)$('menuBtn').focus();}
+function go(t,fromHash){
+  closeMenu();if(typeof camOff==='function')camOff();$('barTitle').textContent=TITLES[t]||'Dreamcrumb';
   screens.forEach(s=>{$('s-'+s).hidden=s!==t;});
   document.querySelectorAll('.nav button,.drawer button[data-go]').forEach(b=>{if(b.dataset.go===t)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   window.scrollTo(0,0);
-  try{history.replaceState(null,'','#'+t);}catch(e){}
+  try{if(!fromHash&&location.hash!=='#'+t)history.pushState(null,'','#'+t);}catch(e){}
 }
 document.addEventListener('click',e=>{
-  if(e.target.closest('#menuBtn')){$('drawer').hidden=false;$('dim').hidden=false;return;}
+  if(e.target.closest('#menuBtn')){$('drawer').hidden=false;$('dim').hidden=false;$('menuBtn').setAttribute('aria-expanded','true');const f=$('drawer').querySelector('button');if(f)f.focus();return;}
   if(e.target.closest('#drClose')||e.target.id==='dim'){closeMenu();return;}
   const g=e.target.closest('[data-go]'); if(g){go(g.dataset.go);return;}
   const bt=e.target.closest('[data-butter]'); if(bt){butterMode=bt.dataset.butter;render();return;}
@@ -625,13 +629,14 @@ document.addEventListener('change',e=>{
 $('margin').addEventListener('input',e=>{margin=+e.target.value;render();});
 $('recSel').addEventListener('change',e=>{rIdx=+e.target.value;margin=Math.round(R().margin)||40;$('margin').value=margin;all();});
 $('addForm').addEventListener('submit',savePrice);$('addForm').addEventListener('input',formPreview);
-let camStream=null;
+let camStream=null,camBusy=false;
 function camOff(){if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}const c=$('camBox');if(c)c.remove();}
 async function openCam(){
+  if($('camBox')||camBusy)return; if(/Line\/|FBAN|FBAV|Instagram/i.test(navigator.userAgent)){$('rcpFileCam').click();return;}
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('rcpFileCam').click();return;}
-  try{camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920}},audio:false});}
-  catch(x){say('rcpMsg',false,'เปิดกล้องไม่ได้ (อนุญาตให้ใช้กล้องในเบราว์เซอร์ก่อน) · ใช้ปุ่ม เลือกรูป แทนได้ค่ะ');return;}
-  const box=document.createElement('div');box.className='cam';box.id='camBox';
+  camBusy=true;try{camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920}},audio:false});}
+  catch(x){camBusy=false;say('rcpMsg',false,'เปิดกล้องไม่ได้ (อนุญาตให้ใช้กล้องในเบราว์เซอร์ก่อน) · ใช้ปุ่ม เลือกรูป แทนได้ค่ะ');return;}
+  camBusy=false;const box=document.createElement('div');box.className='cam';box.id='camBox';
   box.innerHTML='<video id="camV" autoplay playsinline muted></video><div class="cbar"><button class="btn ghost" type="button" id="camX" style="background:#fff">ยกเลิก</button><button class="btn" type="button" id="camShot">📷 ถ่าย</button></div>';
   document.body.appendChild(box);const v=$('camV');v.srcObject=camStream;
   $('camX').onclick=camOff;
@@ -645,7 +650,8 @@ document.addEventListener('input',e=>{const r=e.target.closest('.rr');if(r&&e.ta
 $('ingForm').addEventListener('submit',saveIng);$('recForm').addEventListener('submit',saveRec);
 addRow(); all(); loadSheet();
 {const h=(location.hash||'').slice(1); if(screens.includes(h)) go(h);}
-window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1); if(screens.includes(h)) go(h);});
+window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1); go(screens.includes(h)?h:'home',true);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('camBox'))camOff();else if(!$('drawer').hidden)closeMenu();}});
 </script>
 
 </body></html>
