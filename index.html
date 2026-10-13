@@ -101,6 +101,20 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .errmsg{background:var(--pink);color:var(--ink);border-radius:18px;padding:14px 16px}
 .btn:disabled{opacity:.5}
 html{scroll-padding-top:72px}
+.sheetov{position:fixed;inset:0;z-index:70;background:#fff;color:#111;overflow:auto;padding:16px}
+.sheetov .paper{max-width:560px;margin:0 auto;font-family:var(--f-body)}
+.sheetov h2{font-family:var(--f-display);font-size:26px;margin:0 0 2px}
+.sheetov table{width:100%;border-collapse:collapse;margin:10px 0;font-size:15px}
+.sheetov th{text-align:left;font-size:13px;color:#555;border-bottom:2px solid #222;padding:6px 4px}
+.sheetov td{padding:7px 4px;border-bottom:1px solid #ddd}
+.sheetov td.n,.sheetov th.n{text-align:right;font-variant-numeric:tabular-nums}
+.sheetov .sum{background:#f3f6fa;border-radius:12px;padding:10px 12px;margin-top:12px}
+.sheetov .sum div{display:flex;justify-content:space-between;padding:4px 0}
+.sheetov .big2{font-size:22px;font-weight:700}
+.sheetov .acts{display:flex;gap:10px;margin-bottom:14px}
+.sheetov .small{font-size:12.5px;color:#555;margin-top:12px}
+.chart{width:100%;height:auto;display:block}
+@media print{body>*:not(#sheetOv){display:none!important}.sheetov{position:static;padding:0;overflow:visible}.sheetov .acts{display:none}}
 </style>
 
 </head><body>
@@ -150,6 +164,12 @@ html{scroll-padding-top:72px}
   <h2 class="h2">ส่วนผสมที่ใช้เงินมากสุด</h2>
   <div class="card ing" id="ings"></div>
   <div class="tip"><span aria-hidden="true">💡</span><div>อยากได้กำไร <b id="tipM"></b> ให้ <b>หารต้นทุนด้วย <span id="tipD"></span></b> นะคะ ไม่ใช่คูณ <span id="tipX"></span> เพราะกำไรคิดจากราคาขาย</div></div>
+  <h2 class="h2">ใบสรุปสูตร</h2>
+  <button class="btn" type="button" id="sheetBtn">🖨️ เปิดใบสรุป พิมพ์ / บันทึก PDF</button>
+  <h2 class="h2">ถ้าตั้งราคาขายเท่านี้ กำไรเป็นเท่าไร</h2>
+  <div class="card"><div id="chProfit"></div><div class="note" id="chProfitNote"></div></div>
+  <h2 class="h2">ราคาวัตถุดิบตามเวลา</h2>
+  <div class="card"><div class="field"><label for="trSel">เลือกวัตถุดิบ</label><select id="trSel" style="font:inherit;font-size:18px;padding:12px 14px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);width:100%"></select></div><div id="chTrend"></div><div class="note" id="chTrendNote"></div></div>
   <p class="sample" id="costNote"></p>
 </main>
 
@@ -260,6 +280,7 @@ html{scroll-padding-top:72px}
   <button data-go="plan"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3H9zM6 5h12v16H6z"/><path d="M9 11h6M9 15h4"/></svg></span>วางแผน</button>
 </nav>
 </div>
+<div class="sheetov" id="sheetOv" hidden><div class="paper"><div class="acts"><button class="btn" type="button" id="sheetPrint">🖨️ พิมพ์ / บันทึก PDF</button><button class="btn ghost" type="button" id="sheetClose">ปิด</button></div><div id="sheetBody"></div></div></div>
 <div class="dim" id="dim" hidden></div>
 <aside class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-label="เมนูทั้งหมด"><div class="brand">Dreamcrumb</div><button type="button" data-go="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>หน้าแรก</button><button type="button" data-go="cost"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01"/></svg>ดูต้นทุนสูตร</button><button type="button" data-go="plan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3H9zM6 5h12v16H6z"/><path d="M9 11h6M9 15h4"/></svg>วางแผนผลิต</button><button type="button" data-go="add"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>บันทึกข้อมูล</button><button type="button" data-go="scan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>เทียบราคาป้าย</button><button type="button" data-go="list"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>รายการซื้อของ</button><div class="sep"></div><button type="button" id="drClose">✕ ปิดเมนู</button></aside>
 
@@ -329,12 +350,12 @@ function renderList(){
   const miss=[...new Set([...R().ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n),...D.missing])];
   $('missing').innerHTML=miss.map(n=>`<div class="row"><span>${esc(n)}</span><span class="tag guess">ถ่ายป้ายส่งมา</span></div>`).join('')||'<div class="note">ทุกอย่างมีราคาแล้ว</div>';
 }
-function all(){render();renderScans();renderList();if(typeof planFill==='function'){const f=D.recipes.findIndex(x=>x.id===pId);pIdx=f>=0?f:0;planFill();}}
+function all(){render();renderCharts();renderScans();renderList();if(typeof planFill==='function'){const f=D.recipes.findIndex(x=>x.id===pId);pIdx=f>=0?f:0;planFill();}}
 
 function normD(j){
   const n=num, d={...j,live:true};
   d.butterLo=n(j.butterLo);d.butterHi=n(j.butterHi);d.nextP=n(j.nextP);
-  d.ingList=Array.isArray(j.ingList)?j.ingList:[];d.missing=Array.isArray(j.missing)?j.missing:[];
+  d.history=(Array.isArray(j.history)?j.history:[]).map(h=>({id:String(h.id||''),date:String(h.date||''),ppg:n(h.ppg)})).filter(h=>h.id&&h.ppg>0);d.ingList=Array.isArray(j.ingList)?j.ingList:[];d.missing=Array.isArray(j.missing)?j.missing:[];
   {const seen=new Set();d.scans=(Array.isArray(j.scans)?j.scans:[]).map(x=>({...x,w:n(x.w)||1,price:n(x.price)})).filter(x=>{const k=[x.item,x.name,x.w,x.price,!!x.promo].join('|');if(seen.has(k))return false;seen.add(k);return true;});}
   d.recipes=(Array.isArray(j.recipes)?j.recipes:[]).map(r=>({...r,
     yieldUnit:String(r.yieldUnit||'ถุง').replace(/[<>&"'`]/g,'').slice(0,20)||'ถุง',
@@ -547,6 +568,55 @@ async function saveRcp(){
   }catch(x){say('rcpRes',false,'ยังไม่สำเร็จ: '+(x.message||'ลองใหม่')+(n?' · บันทึกไปแล้ว '+n+' รายการ กดบันทึกอีกครั้งจะทำต่อเฉพาะที่เหลือ ไม่ซ้ำ':''));}
   btn.disabled=false;
 }
+// ---- ใบสรุป + กราฟ ----
+function lineSvg(pts,o){o=o||{};const W=320,H=170,L=38,Rr=12,T=14,B=26;if(pts.length<2)return '';
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys,o.y0==null?Infinity:o.y0),y1=Math.max(...ys);if(x1===x0)x1=x0+1;if(y1===y0){y1=y0+1;}
+  const sx=x=>L+(x-x0)/(x1-x0)*(W-L-Rr),sy=y=>T+(1-(y-y0)/(y1-y0))*(H-T-B);
+  const path=pts.map((p,i)=>(i?'L':'M')+sx(p.x).toFixed(1)+' '+sy(p.y).toFixed(1)).join(' ');
+  let g='';for(let k=0;k<=3;k++){const v=y0+(y1-y0)*k/3,yy=sy(v);g+=`<line x1="${L}" x2="${W-Rr}" y1="${yy}" y2="${yy}" stroke="#D5E4F4" stroke-dasharray="3 3"/><text x="${L-4}" y="${yy+4}" font-size="10" text-anchor="end" fill="#60758F">${(+v.toFixed(2))}</text>`;}
+  if(y0<0&&y1>0){const zy=sy(0);g+=`<line x1="${L}" x2="${W-Rr}" y1="${zy}" y2="${zy}" stroke="#B8561F" stroke-width="1.5"/>`;}
+  const lab=(o.xl||[]).map(t=>`<text x="${sx(t.x)}" y="${H-8}" font-size="10" text-anchor="${t.x>=x1?'end':(t.x<=x0?'start':'middle')}" fill="#60758F">${esc(t.t)}</text>`).join('');
+  const mk=o.mark?`<circle cx="${sx(o.mark.x)}" cy="${sy(o.mark.y)}" r="5" fill="#C2410C"/><text x="${sx(o.mark.x)}" y="${sy(o.mark.y)-9}" font-size="11" text-anchor="middle" fill="#C2410C" font-weight="700">${esc(o.mark.t)}</text>`:'';
+  const dots=o.dots?pts.map(p=>`<circle cx="${sx(p.x)}" cy="${sy(p.y)}" r="3.5" fill="#2B74B8"/>`).join(''):'';
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.alt||'กราฟ')}">${g}<path d="${path}" fill="none" stroke="#2B74B8" stroke-width="2.5"/>${dots}${mk}${lab}</svg>`;}
+function recCalc(){const rec=R(),c=calc(rec,butterMode),per=c.perBag,mg=Math.min(Math.max(margin/100,0),0.9),price=Math.ceil(+(per/(1-mg)).toFixed(6));return {rec,c,per,price};}
+function renderCharts(){
+  const {rec,per,price}=recCalc();
+  if(!rec.ings.length||!(per>0)){$('chProfit').innerHTML='';$('chProfitNote').textContent='ยังไม่มีข้อมูลต้นทุนพอจะวาดกราฟ';}
+  else{const lo=Math.max(1,Math.floor(per)),hi=Math.ceil(per*2.5),pts=[];for(let p=lo;p<=hi;p++)pts.push({x:p,y:+(p-per).toFixed(2)});
+    $('chProfit').innerHTML=lineSvg(pts,{alt:'กำไรต่อชิ้นตามราคาขาย',mark:{x:Math.min(Math.max(price,lo),hi),y:price-per,t:'฿'+price},xl:[{x:lo,t:'฿'+lo},{x:hi,t:'฿'+hi}]});
+    $('chProfitNote').textContent='แกนตั้ง = กำไรต่อ'+(rec.yieldUnit||'ถุง')+' (บาท) · จุดส้ม = ราคาแนะนำ ฿'+price+' กำไร '+baht(price-per)+' · ต่ำกว่า ฿'+Math.ceil(per)+' คือขาดทุน';}
+  // trend
+  const H=(D.history||[]),by={};H.forEach(h=>{(by[h.id]=by[h.id]||[]).push(h);});
+  const ids=Object.keys(by).filter(k=>by[k].length>=2);const cur=$('trSel').value;
+  $('trSel').innerHTML=ids.length?ids.map(k=>{const nm=((D.ingList||[]).find(i=>i.id===k)||{}).name||k;return `<option value="${esc(k)}"${k===cur?' selected':''}>${esc(nm)} (${by[k].length} ครั้ง)</option>`;}).join(''):'<option value="">ยังไม่มี</option>';
+  drawTrend(by);
+}
+function drawTrend(by){
+  const k=$('trSel').value,arr=(by||{})[k]||[];
+  if(arr.length<2){$('chTrend').innerHTML='';$('chTrendNote').textContent='ต้องบันทึกราคาวัตถุดิบเดียวกันอย่างน้อย 2 ครั้ง (คนละวัน) ถึงจะเห็นแนวโน้ม';return;}
+  const st=arr.map((h,i)=>({t:Date.parse(h.date),i,h})).sort((a,b)=>((isNaN(a.t)||isNaN(b.t))?a.i-b.i:a.t-b.t));
+  const pts=st.map((o,i)=>({x:i,y:+(o.h.ppg*(((D.ingList||[]).find(g=>g.id===k)||{}).unit==='pc'?1:100)).toFixed(3)}));
+  const unitLbl=((D.ingList||[]).find(g=>g.id===k)||{}).unit==='pc'?'ต่อชิ้น':'ต่อ 100 กรัม';
+  $('chTrend').innerHTML=lineSvg(pts,{dots:true,alt:'แนวโน้มราคา',xl:[{x:0,t:String(st[0].h.date||'ครั้งแรก').slice(0,10)},{x:pts.length-1,t:String(st[st.length-1].h.date||'ล่าสุด').slice(0,10)}]});
+  const a=pts[0].y,b=pts[pts.length-1].y,ch=a>0?(b-a)/a*100:0;
+  $('chTrendNote').textContent='ราคา'+unitLbl+' (บาท) · ล่าสุด ฿'+b+' เทียบครั้งแรก '+(ch>=0?'+':'')+ch.toFixed(0)+'%'+(ch>=10?' · แพงขึ้นมาก ลองหาเจ้าอื่น':'');
+}
+function openSheet(){
+  const {rec,c,per,price}=recCalc(),yu=esc(rec.yieldUnit||'ถุง'),n=rec.bags||1;
+  const tot=c.rows.reduce((s,r)=>s+r.cost,0)||1;
+  const rows=[...c.rows].sort((a,b)=>b.cost-a.cost).map(r=>`<tr><td>${esc(r.n)}</td><td class="n">${r.g} ${r.u==='pc'?'ชิ้น':'กรัม'}</td><td class="n">${(r.cost/tot*100).toFixed(0)}%</td><td class="n">${baht(r.cost)}</td></tr>`).join('');
+  const rev=price*n,cost=per*n,mm=price>0?(price-per)/price*100:0,miss=c.rows.filter(r=>!(r.ppg>0)).map(r=>esc(r.n));
+  const d=new Date(),ds=d.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+  $('sheetBody').innerHTML=`<h2>${esc(rec.name)}</h2><div class="small" style="margin:0 0 6px">ได้ ${n} ${yu} ต่อสูตร · ${ds}</div>
+  <table><thead><tr><th>วัตถุดิบ ${c.rows.length} รายการ</th><th class="n">ปริมาณ</th><th class="n">สัดส่วน</th><th class="n">ต้นทุน</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td colspan="3"><b>ค่าวัตถุดิบรวมต่อสูตร</b></td><td class="n"><b>${baht(tot)}</b></td></tr></tfoot></table>
+  <div class="sum"><div><span>ค่าบรรจุภัณฑ์ต่อ${yu}</span><b>${baht(rec.packaging)}</b></div><div><span>ค่าแรงต่อ${yu}</span><b>${baht(rec.labor)}</b></div><div><span>แก๊ส/ไฟต่อ${yu}</span><b>${baht(rec.gas)}</b></div></div>
+  <div class="sum"><div><span>ต้นทุนต่อ${yu}</span><b class="big2">${baht(per)}</b></div><div><span>ราคาขายแนะนำ</span><b class="big2">฿${price}</b></div><div><span>กำไรต่อ${yu} (${mm.toFixed(0)}% ของราคาขาย)</span><b>${baht(price-per)}</b></div>
+  <div style="border-top:1px dashed #aaa;margin-top:6px;padding-top:8px"><span>ถ้าขายหมด ${n} ${yu}: รายรับ</span><b>${baht(rev,0)}</b></div><div><span>ต้นทุนรวม</span><b>${baht(cost,0)}</b></div><div><span>กำไรรวม</span><b>${baht(rev-cost,0)}</b></div></div>
+  <div class="small">${miss.length?'⚠ ยังไม่มีราคา: '+miss.join(', ')+' (นับเป็น ฿0 ต้นทุนจริงจะสูงกว่านี้)<br>':''}ค่าแรงและแก๊สเป็นค่าที่ผู้ทำกรอกไว้ ราคาวัตถุดิบใช้ราคาต่ำสุดที่บันทึก ยังไม่รวมของเสียและค่าใช้จ่ายคงที่ · สร้างโดย Dreamcrumb</div>`;
+  $('sheetOv').hidden=false;
+}
 // ---- วางแผนผลิต ----
 let pIdx=0,pId=null;
 function planFill(){
@@ -593,6 +663,7 @@ function planCalc(){
   if(c.rows.some(r=>!(r.ppg>0))) h+=`<div class="tip"><span aria-hidden="true">⚠️</span><div>มีวัตถุดิบที่ยังไม่มีราคา ต้นทุนจริงจะสูงกว่านี้</div></div>`;
   $('pOut').innerHTML=h;
 }
+$('trSel').addEventListener('change',()=>{const by={};(D.history||[]).forEach(h=>{(by[h.id]=by[h.id]||[]).push(h);});drawTrend(by);});
 $('pSel').addEventListener('change',e=>{pIdx=+e.target.value;planFill();});
 document.addEventListener('input',e=>{if(e.target.closest('.p-st')||e.target.id==='pTarget')planCalc();});
 // ---- เมนู ----
@@ -615,6 +686,9 @@ document.addEventListener('click',e=>{
   const iu=e.target.closest('[data-iunit]'); if(iu){iunit=iu.dataset.iunit;document.querySelectorAll('[data-iunit]').forEach(x=>x.setAttribute('aria-pressed',x===iu));return;}
   const tb=e.target.closest('[data-tab]'); if(tb){document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x===tb));document.querySelectorAll('[data-pane]').forEach(f=>{f.hidden=f.dataset.pane!==tb.dataset.tab;});return;}
   if(e.target.closest('#refresh')){loadSheet();return;}
+  if(e.target.closest('#sheetBtn')){openSheet();return;}
+  if(e.target.closest('#sheetClose')){$('sheetOv').hidden=true;return;}
+  if(e.target.closest('#sheetPrint')){window.print();return;}
   if(e.target.closest('#rAddRow')){addRow();return;}
   const rm=e.target.closest('#rItems .rw .two .btn'); if(rm){const rows=document.querySelectorAll('#rItems .rw');const w=rm.closest('.rw');if(rows.length>1){w.remove();}else{w.querySelectorAll('input').forEach(i=>i.value='');delete w.dataset.created;delete w.dataset.needPrice;refreshRow(w);}}
 });
@@ -626,7 +700,7 @@ document.addEventListener('change',e=>{
     if(u==='pc'){unit='pc';}else if(unit==='pc'){unit='g';}
     document.querySelectorAll('[data-unit]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.unit===unit));formPreview();}
 });
-$('margin').addEventListener('input',e=>{margin=+e.target.value;render();});
+$('margin').addEventListener('input',e=>{margin=+e.target.value;render();renderCharts();});
 $('recSel').addEventListener('change',e=>{rIdx=+e.target.value;margin=Math.round(R().margin)||40;$('margin').value=margin;all();});
 $('addForm').addEventListener('submit',savePrice);$('addForm').addEventListener('input',formPreview);
 let camStream=null,camBusy=false;
@@ -651,7 +725,7 @@ $('ingForm').addEventListener('submit',saveIng);$('recForm').addEventListener('s
 addRow(); all(); loadSheet();
 {const h=(location.hash||'').slice(1); if(screens.includes(h)) go(h);}
 window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1); go(screens.includes(h)?h:'home',true);});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('camBox'))camOff();else if(!$('drawer').hidden)closeMenu();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('sheetOv').hidden){$('sheetOv').hidden=true;return;}if($('camBox'))camOff();else if(!$('drawer').hidden)closeMenu();}});
 </script>
 
 </body></html>
