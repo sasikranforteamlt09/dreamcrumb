@@ -73,11 +73,11 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .chk input{width:22px;height:22px;margin-top:3px;accent-color:var(--accent);flex:none}
 .chk .t{min-width:0}
 .chk input:checked + .t{opacity:.5;text-decoration:line-through}
-.nav{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--card);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
-.nav button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:6px 0;border-radius:18px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.nav{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(6,1fr);gap:0;background:var(--card);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+.nav button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;padding:6px 0;border-radius:18px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
 .nav button[aria-current="page"]{color:var(--accent);font-weight:600}
 .nav button[aria-current="page"] .pill{background:var(--soft)}
-.nav .pill{width:48px;height:34px;border-radius:99px;display:grid;place-items:center}
+.nav .pill{width:40px;height:34px;border-radius:99px;display:grid;place-items:center}
 .sample{font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.screen{animation:in .25s ease-out}@keyframes in{from{opacity:.0;transform:translateY(6px)}to{opacity:1;transform:none}}}
 .form{display:flex;flex-direction:column;gap:14px}
@@ -135,6 +135,19 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
   <div class="card ing" id="ings"></div>
   <div class="tip"><span aria-hidden="true">💡</span><div>อยากได้กำไร <b id="tipM"></b> ให้ <b>หารต้นทุนด้วย <span id="tipD"></span></b> นะคะ ไม่ใช่คูณ <span id="tipX"></span> เพราะกำไรคิดจากราคาขาย</div></div>
   <p class="sample" id="costNote"></p>
+</main>
+
+<!-- ===== วางแผนผลิต ===== -->
+<main class="screen" id="s-plan" hidden>
+  <h1 class="hello" style="font-size:26px">ช่วยคิดแผนผลิต</h1>
+  <p class="sub">ใส่ของที่มี ระบบบอกว่าทำได้กี่ชิ้น ขายได้เท่าไร หรือใส่จำนวนที่อยากทำ ระบบบอกว่าต้องซื้ออะไรเพิ่ม</p>
+  <div class="card form" style="display:flex;flex-direction:column;gap:12px">
+    <div class="field"><label for="pSel">เลือกสูตร</label><select id="pSel"></select></div>
+    <div class="field"><label>วัตถุดิบที่มีอยู่ (ไม่ใส่ = ไม่จำกัด)</label><div id="pStock" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div class="field"><label for="pTarget">หรืออยากทำกี่ชิ้น (ไม่ใส่ก็ได้)</label><input id="pTarget" type="text" inputmode="decimal" placeholder="เช่น 50"></div>
+  </div>
+  <div id="pOut" style="display:flex;flex-direction:column;gap:12px;margin-top:12px"></div>
+  <p class="sample">คำนวณจากสูตรและราคาในสมุดโดยตรง ไม่ใช้ AI เดาตัวเลข จึงตรวจย้อนได้ · ต้นทุนรวมค่าบรรจุภัณฑ์ แรงงาน แก๊ส</p>
 </main>
 
 <!-- ===== ป้ายราคา ===== -->
@@ -229,6 +242,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
   <button data-go="scan"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>ป้ายราคา</button>
   <button data-go="add"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>บันทึก</button>
   <button data-go="list"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></span>รายการ</button>
+  <button data-go="plan"><span class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3H9zM6 5h12v16H6z"/><path d="M9 11h6M9 15h4"/></svg></span>วางแผน</button>
 </nav>
 </div>
 
@@ -297,7 +311,7 @@ function renderList(){
   const miss=[...new Set([...R().ings.filter(i=>!i.butter&&!(i.ppg>0)).map(i=>i.n),...D.missing])];
   $('missing').innerHTML=miss.map(n=>`<div class="row"><span>${esc(n)}</span><span class="tag guess">ถ่ายป้ายส่งมา</span></div>`).join('')||'<div class="note">ทุกอย่างมีราคาแล้ว</div>';
 }
-function all(){render();renderScans();renderList();}
+function all(){render();renderScans();renderList();if(typeof planFill==='function'){pIdx=Math.min(pIdx,Math.max(0,D.recipes.length-1));const a=document.activeElement;if(!(a&&a.classList&&a.classList.contains('p-st')))planFill();}}
 
 async function loadSheet(keepId){
   const st=$('status'); st.textContent='กำลังอ่านสมุดต้นทุน…';
@@ -500,8 +514,56 @@ async function saveRcp(){
   }catch(x){say('rcpRes',false,'ยังไม่สำเร็จ: '+(x.message||'ลองใหม่')+(n?' · บันทึกไปแล้ว '+n+' รายการ กดบันทึกอีกครั้งจะทำต่อเฉพาะที่เหลือ ไม่ซ้ำ':''));}
   btn.disabled=false;
 }
+// ---- วางแผนผลิต ----
+let pIdx=0;
+function planFill(){
+  $('pSel').innerHTML=D.recipes.map((x,i)=>`<option value="${i}"${i===pIdx?' selected':''}>${esc(x.name)}</option>`).join('');
+  const rec=D.recipes[pIdx]; if(!rec){$('pStock').innerHTML='';$('pOut').innerHTML='';return;}
+  $('pStock').innerHTML=rec.ings.map((i,k)=>`<div style="display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center"><span>${esc(i.n)}<br><span class="note">ต่อสูตรใช้ ${i.g} ${i.u==='pc'?'ชิ้น':'g'}</span></span><input class="form-in p-st" data-k="${k}" type="text" inputmode="decimal" placeholder="${i.u==='pc'?'ชิ้น':'กรัม'}" style="font:inherit;font-size:18px;padding:12px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--ink);width:100%"></div>`).join('');
+  planCalc();
+}
+function planCalc(){
+  const rec=D.recipes[pIdx]; if(!rec) return;
+  const c=calc(rec,butterMode), per=c.perBag, yu=rec.yieldUnit||'ถุง', bags=rec.bags||1;
+  const mm=Math.min(Math.max(rec.margin/100,0),0.9), price=Math.ceil(+(per/(1-mm)).toFixed(6));
+  let lim=null, batches=Infinity;
+  document.querySelectorAll('.p-st').forEach(inp=>{
+    if(String(inp.value).trim()==='') return;
+    const i=rec.ings[+inp.dataset.k]; if(!(i.g>0)) return;
+    const b=num(inp.value)/i.g; if(b<batches){batches=b;lim=i;}
+  });
+  const tgt=num($('pTarget').value); let h='';
+  if(lim){
+    const pcs=Math.floor(+(batches*bags).toFixed(6));
+    const used=batches*bags>0?pcs/bags:0;
+    const mat=c.rows.reduce((s,r)=>s+r.cost,0)*(pcs/bags)/Math.max(pcs,1);
+    h+=`<div class="card"><div class="note">ด้วยของที่มี ทำได้</div><div class="big num">${pcs} ${esc(yu)}</div><div class="note">ติดที่ <b>${esc(lim.n)}</b> (ตัวที่หมดก่อน)</div>`+
+    `<div class="row"><span>ต้นทุนต่อ${esc(yu)}</span><b class="num">${baht(per)}</b></div>`+
+    `<div class="row"><span>ราคาขายแนะนำ</span><b class="num">฿${price}</b></div>`+
+    `<div class="row"><span>ต้นทุนรวม ${pcs} ${esc(yu)}</span><b class="num">${baht(per*pcs)}</b></div>`+
+    `<div class="row"><span>ขายหมดได้</span><b class="num">${baht(price*pcs,0)}</b></div>`+
+    `<div class="row"><span>กำไร</span><b class="num">${baht((price-per)*pcs,0)}</b></div></div>`;
+  }else if(!(tgt>0)){
+    h+=`<div class="card note">ใส่จำนวนวัตถุดิบที่มี หรือจำนวนชิ้นที่อยากทำ ด้านบน</div>`;
+  }
+  if(tgt>0){
+    const f=tgt/bags;
+    const rows=rec.ings.map((i,k)=>{const need=i.g*f; const inp=document.querySelector('.p-st[data-k="'+k+'"]'); const has=inp&&String(inp.value).trim()!==''?num(inp.value):0;
+      const short=Math.max(0,need-has); const u=i.u==='pc'?'ชิ้น':'g';
+      return `<div class="row"><span>${esc(i.n)}${i.ppg>0?'':' <span class="tag guess">ยังไม่มีราคา</span>'}<br><span class="note">ต้องใช้ ${+need.toFixed(1)} ${u} · มี ${+has.toFixed(1)}</span></span><b class="num">${short>0?'ซื้อเพิ่ม '+(i.u==='pc'?Math.ceil(+short.toFixed(6)):+short.toFixed(1))+' '+u:'พอ ✓'}</b></div>`;}).join('');
+    const buy=rec.ings.reduce((s,r,k)=>{const rr=c.rows[k];const inp=document.querySelector('.p-st[data-k="'+k+'"]');const has=inp&&String(inp.value).trim()!==''?num(inp.value):0;return s+Math.max(0,r.g*f-has)*(rr.ppg||0);},0);
+    h+=`<div class="card"><div class="note">ถ้าอยากทำ</div><div class="big num">${+tgt.toFixed(1)} ${esc(yu)}</div>${rows}`+
+    `<div class="row"><span>เงินซื้อของเพิ่มโดยประมาณ</span><b class="num">${baht(buy,0)}</b></div>`+
+    `<div class="row"><span>ต้นทุนรวม (รวมบรรจุภัณฑ์ แรงงาน แก๊ส)</span><b class="num">${baht(per*tgt,0)}</b></div>`+
+    `<div class="row"><span>ขายหมดได้</span><b class="num">${baht(price*tgt,0)}</b></div></div>`;
+  }
+  if(c.rows.some(r=>!(r.ppg>0))) h+=`<div class="tip"><span aria-hidden="true">⚠️</span><div>มีวัตถุดิบที่ยังไม่มีราคา ต้นทุนจริงจะสูงกว่านี้</div></div>`;
+  $('pOut').innerHTML=h;
+}
+$('pSel').addEventListener('change',e=>{pIdx=+e.target.value;planFill();});
+document.addEventListener('input',e=>{if(e.target.closest('.p-st')||e.target.id==='pTarget')planCalc();});
 // ---- เมนู ----
-const screens=['home','cost','scan','add','list'];
+const screens=['home','cost','scan','add','list','plan'];
 function go(t){
   screens.forEach(s=>{$('s-'+s).hidden=s!==t;});
   document.querySelectorAll('.nav button').forEach(b=>{if(b.dataset.go===t)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
